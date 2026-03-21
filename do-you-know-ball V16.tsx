@@ -1,0 +1,409 @@
+import { useState, useRef, useEffect } from "react";
+
+const COLUMNS = [
+  { name: "Duke",      nickname: "Blue Devils", color: "#00539B", border: "#1a7fd4" },
+  { name: "UConn",     nickname: "Huskies",     color: "#000E2F", border: "#1a3a88" },
+  { name: "Villanova", nickname: "Wildcats",    color: "#003366", border: "#1a5599" },
+  { name: "UNC",       nickname: "Tar Heels",   color: "#4B9CD3", border: "#7bbde8" },
+];
+
+const ROWS = [
+  { name: "Ball Hog",     desc: "Led team in scoring during a Tournament run" },
+  { name: "Clutch Balls", desc: "Hit a game-winning shot in March Madness" },
+  { name: "Ball Knower",  desc: "Became a broadcaster, analyst, or major media figure" },
+  { name: "Ball & Chain", desc: "Won a national championship in their 4th year" },
+];
+
+const ANSWER_POOL = {
+  "0-0": ["Christian Laettner","J.J. Redick","Jay Williams","Shane Battier","Nolan Smith","Tyus Jones","Paolo Banchero","Jason Williams","Grayson Allen","Zion Williamson"],
+  "0-1": ["Kemba Walker","Rip Hamilton","Ben Gordon","Shabazz Napier","Ray Allen","Jeremy Lamb"],
+  "0-2": ["Jalen Brunson","Scottie Reynolds","Allan Ray","Randy Foye","Collin Gillespie","Ryan Arcidiacono","Kris Jenkins"],
+  "0-3": ["Lennie Rosenbluth","James Worthy","Donald Williams","Sean May","Tyler Hansbrough","Joel Berry II"],
+  "1-0": ["Christian Laettner","Tyus Jones","Nolan Smith","Grayson Allen"],
+  "1-1": ["Kemba Walker","Shabazz Napier","Khalid El-Amin","Rip Hamilton"],
+  "1-2": ["Kris Jenkins","Scottie Reynolds","Ryan Arcidiacono"],
+  "1-3": ["Charlie Scott","Phil Ford","Michael Jordan","Rick Fox","Luke Maye"],
+  "2-0": ["Grant Hill","Jay Bilas","J.J. Redick","Dick Vitale","Seth Davis","Jay Williams"],
+  "2-1": ["Donny Marshall","Rebecca Lobo","Gino Auriemma"],
+  "2-2": ["Jay Wright"],
+  "2-3": ["Antawn Jamison","Brad Daugherty","Eric Montross","Hubert Davis","James Worthy","Joel Berry II","Justin Jackson","Kenny Smith","Marcus Ginyard","Pete Chilcutt","Phil Ford","Rasheed Wallace","Rick Fox","Theo Pinson","Tyler Hansbrough","Tyler Zeller","Vince Carter"],
+  "3-0": ["Shane Battier","Clay Buckley","Ron Burt","Ryan Caldbeck","Quinn Cook","Jordan Davidson","Brian Davis","Nate James","Sean Kelly","Greg Koubek","Christian Laettner","J.D. Simpson","Jon Scheyer","Lance Thomas","Brian Zoubek"],   "3-1": ["Antric Klaiber","Andrew Hurley","Cam Spencer","Charles Okwandu","Donnell Beverly","E.J. Harrison","Hassan Diarra","Joey Calcaterra","Justin Evanovich","Kyle Bailey","Lasan Kromah","Nahiem Alleyne","Niels Giffey","Rashamel Jones","Ricky Moore","Ryan Swaller","Shabazz Napier","Shamon Tooles","Taliek Brown","Tristen Newton","Tyler Olander"],   "3-2": ["Ed Pinckney","Dwayne McClain","Gary McLain","Brian Harrington","Ryan Arcidiacono","Daniel Ochefu","Patrick Farrell","Kevin Rafferty","Henry Lowe","Denny Grace","Matt Kennedy","Tom Leibig"],   "3-3": ["Lennie Rosenbluth","Tony Radovich","Bob Young","Jimmy Black","Chris Brust","Jeb Barlow","George Lynch","Henrik Rodl","Matt Wenstrom","Scott Cherry","Travis Stephenson","Jawad Williams","Jackie Manuel","Melvin Scott","C.J. Hooker","Tyler Hansbrough","Danny Green","Bobby Frasor","J.B. Tanner","Patrick Moody","Mike Copeland","Jack Wooten","Marcus Ginyard","Kennedy Meeks","Isaiah Hicks","Nate Britt","Stilman White","Kanler Coker"],
+};
+
+const TOTAL_TILES = 16;
+const nc = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// Build a deduplicated reveal map: tile key -> unique answer string
+// Iterates tiles in order, for each picks the first pool answer not yet assigned
+const buildRevealMap = (cells) => {
+  const assigned = new Set(); // normalized names already assigned to a reveal tile
+  const map = {};
+
+  for (let ri = 0; ri < ROWS.length; ri++) {
+    for (let ci = 0; ci < COLUMNS.length; ci++) {
+      const k = `${ri}-${ci}`;
+      const cell = cells[k];
+      const isCorrect = cell?.status === "correct";
+      const pool = ANSWER_POOL[k] || [];
+
+      // Only need a reveal answer for non-correct tiles with a non-empty pool
+      if (isCorrect || pool.length === 0) continue;
+
+      // Pick first pool answer whose normalized name hasn't been assigned yet
+      const pick = pool.find(a => !assigned.has(nc(a)));
+      if (pick) {
+        map[k] = pick;
+        assigned.add(nc(pick));
+      } else {
+        // All pool answers already used — fall back to first (edge case)
+        map[k] = pool[0];
+      }
+    }
+  }
+  return map;
+};
+
+const validate = (input, key, used) => {
+  const pool = ANSWER_POOL[key] || [];
+  if (pool.length === 0) return { ok: false, reason: "empty" };
+  const ni = nc(input.trim());
+  if (!ni) return null;
+  let matched = pool.find(a => nc(a) === ni);
+  if (!matched) {
+    const byLast = pool.filter(a => { const p = a.split(" "); return nc(p[p.length-1]) === ni; });
+    if (byLast.length === 1) matched = byLast[0];
+  }
+  if (!matched) {
+    const byFirst = pool.filter(a => nc(a.split(" ")[0]) === ni);
+    if (byFirst.length === 1) matched = byFirst[0];
+  }
+  if (!matched) return { ok: false, reason: "wrong" };
+  if (used.has(nc(matched))) return { ok: false, reason: "used", name: matched };
+  return { ok: true, name: matched };
+};
+
+const getVerdict = (correct) => {
+  const pct = correct / TOTAL_TILES;
+  if (correct === TOTAL_TILES) return { label: "IMMACULATE",    sub: "A perfect board. You absolutely know ball.", color: "#FFD700" };
+  if (pct >= 0.75)             return { label: "ELITE",         sub: "Near flawless. You know ball.",             color: "#4ade80" };
+  if (pct >= 0.5)              return { label: "SOLID",         sub: "More than half right. Decent hoops IQ.",    color: "#60a5fa" };
+  if (pct >= 0.25)             return { label: "BENCH WARMER",  sub: "You've watched a game or two... maybe.",    color: "#fb923c" };
+  return                              { label: "RIDE THE PINE", sub: "Turn in your sneakers. Study up.",          color: "#f87171" };
+};
+
+const bgStyle = {
+  minHeight: "100vh",
+  background: "#CC1122",
+  backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.15) 1px, transparent 1px)`,
+  backgroundSize: "18px 18px",
+  fontFamily: "'Arial Black', 'Impact', 'Segoe UI Black', system-ui, sans-serif",
+  color: "#fff",
+  paddingBottom: 40,
+};
+
+export default function App() {
+  const [cells, setCells] = useState({});
+  const [used, setUsed] = useState(new Set());
+  const [active, setActive] = useState(null);
+  const [inputVal, setInputVal] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [showRules, setShowRules] = useState(false);
+  const [showEndGame, setShowEndGame] = useState(false);
+  const [revealMap, setRevealMap] = useState(null); // null = not revealed yet
+  const inputRef = useRef(null);
+
+  const correct     = Object.values(cells).filter(c => c?.status === "correct").length;
+  const incorrect   = Object.values(cells).filter(c => c?.status === "wrong").length;
+  const totalPlayed = correct + incorrect;
+
+  useEffect(() => {
+    if (totalPlayed === TOTAL_TILES) setTimeout(() => setShowEndGame(true), 600);
+  }, [totalPlayed]);
+
+  useEffect(() => {
+    if (active) setTimeout(() => inputRef.current?.focus(), 60);
+  }, [active]);
+
+  const openCell = (r, c) => {
+    const k = `${r}-${c}`;
+    if (cells[k]) return;
+    setActive(k); setInputVal(""); setFeedback(null);
+  };
+
+  const submit = () => {
+    if (!active || !inputVal.trim()) return;
+    const res = validate(inputVal, active, used);
+    if (!res) return;
+    if (res.reason === "empty") { setFeedback({ type: "error", msg: "⏳ Answer pool coming soon!" }); return; }
+    if (res.ok) {
+      const nu = new Set(used);
+      nu.add(nc(res.name));
+      setUsed(nu);
+      setCells(p => ({ ...p, [active]: { status: "correct", name: res.name } }));
+      setFeedback({ type: "correct", msg: `✅ ${res.name} — BUCKETS!` });
+      setTimeout(() => { setActive(null); setFeedback(null); setInputVal(""); }, 1400);
+    } else if (res.reason === "used") {
+      setFeedback({ type: "error", msg: `❌ ${res.name} already used!` });
+    } else {
+      setCells(p => ({ ...p, [active]: { status: "wrong" } }));
+      setFeedback(null); setActive(null); setInputVal("");
+    }
+  };
+
+  const handleReveal = () => {
+    // Build deduplicated reveal map at the moment of reveal
+    setRevealMap(buildRevealMap(cells));
+  };
+
+  const reset = () => {
+    setCells({}); setUsed(new Set()); setActive(null);
+    setInputVal(""); setFeedback(null);
+    setShowRules(false); setShowEndGame(false); setRevealMap(null);
+  };
+
+  const activeInfo = active
+    ? (() => { const [r, c] = active.split("-").map(Number); return { row: ROWS[r], col: COLUMNS[c] }; })()
+    : null;
+
+  const verdict  = getVerdict(correct);
+  const gridCols = "106px 1fr 1fr 1fr 1fr";
+
+  const hasRevealable = incorrect > 0 || (TOTAL_TILES - totalPlayed) > 0;
+
+  return (
+    <div style={bgStyle}>
+
+      {/* ── HEADER ── */}
+      <div style={{ background: "#1B2A6B", borderBottom: "6px solid #FFD700", padding: "20px 16px 18px", textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}>
+        <div style={{ display: "inline-block", background: "#F5F0E0", color: "#1B2A6B", fontSize: 10, fontWeight: 900, letterSpacing: 3, textTransform: "uppercase", padding: "4px 18px", borderRadius: 3, marginBottom: 12, boxShadow: "0 2px 6px rgba(0,0,0,0.3)", transform: "rotate(-1deg)" }}>
+          Mostly Sports x March Ball
+        </div>
+        <div style={{ marginBottom: 4 }}>
+          <div style={{ fontSize: "clamp(28px,7vw,54px)", fontWeight: 900, lineHeight: 1, textTransform: "uppercase", letterSpacing: -1, color: "#fff", textShadow: "4px 4px 0px #CC1122, 6px 6px 0px rgba(0,0,0,0.3)" }}>THE MOSTLY</div>
+          <div style={{ fontSize: "clamp(28px,7vw,54px)", fontWeight: 900, lineHeight: 1, textTransform: "uppercase", letterSpacing: -1, color: "#FFD700", textShadow: "4px 4px 0px #CC1122, 6px 6px 0px rgba(0,0,0,0.4)" }}>IMMACULATE GRID</div>
+        </div>
+        <div style={{ display: "inline-block", background: "#CC1122", color: "#fff", fontSize: "clamp(11px,2.8vw,16px)", fontWeight: 900, letterSpacing: 3, textTransform: "uppercase", padding: "5px 20px", borderRadius: 3, marginTop: 10, marginBottom: 14, border: "2px solid #FFD700", boxShadow: "3px 3px 0px rgba(0,0,0,0.3)" }}>
+          Do You Know Ball? 🏀
+        </div>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 2, marginBottom: 14, fontFamily: "'Arial', sans-serif" }}>
+          ONE GUESS PER TILE &nbsp;•&nbsp; EACH PLAYER USED ONCE
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "stretch", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+          {[
+            { val: correct,                   label: "CORRECT",   bg: "#145a2e", bd: "#22c55e", vc: "#4ade80", lc: "#86efac" },
+            { val: incorrect,                 label: "INCORRECT", bg: "#5a0a0a", bd: "#dc2626", vc: "#f87171", lc: "#fca5a5" },
+            { val: TOTAL_TILES - totalPlayed, label: "LEFT",      bg: "#1B2A6B", bd: "#FFD700", vc: "#FFD700", lc: "rgba(255,212,0,0.7)" },
+          ].map((s, i) => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: s.bg, border: `2px solid ${s.bd}`, borderRadius: 8, padding: "8px 18px", boxShadow: "0 3px 0px rgba(0,0,0,0.3)", minWidth: 80 }}>
+              <div style={{ fontSize: 22, fontWeight: 900, color: s.vc, lineHeight: 1 }}>{s.val}</div>
+              <div style={{ fontSize: 9, color: s.lc, fontWeight: 700, letterSpacing: 1.5, marginTop: 3 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+          <button onClick={() => setShowRules(p => !p)} style={navBtn("#1B2A6B", "#FFD700")}>{showRules ? "Hide Rules" : "How to Play"}</button>
+          {totalPlayed > 0 && totalPlayed < TOTAL_TILES && <button onClick={() => setShowEndGame(true)} style={navBtn("#5a0a0a", "#f87171")}>End Game</button>}
+          <button onClick={reset} style={navBtn("#5a0a0a", "#f87171")}>Reset</button>
+        </div>
+      </div>
+
+      {/* Rules */}
+      {showRules && (
+        <div style={{ maxWidth: 520, margin: "12px auto", background: "#1B2A6B", border: "3px solid #FFD700", borderRadius: 10, padding: "16px 20px", fontSize: 12, lineHeight: 1.9, marginLeft: 12, marginRight: 12, fontFamily: "'Arial', sans-serif", boxShadow: "4px 4px 0px rgba(0,0,0,0.4)" }}>
+          <div style={{ fontWeight: 900, color: "#FFD700", marginBottom: 8, fontSize: 14, textTransform: "uppercase", letterSpacing: 1 }}>How to Play</div>
+          {["Click any open tile to enter a player's name","Player must satisfy both the column team and the row category","One guess per tile — wrong answer locks it red permanently","Each player can only be used once across the whole board"].map((t,i)=>(
+            <div key={i} style={{ color: "#ccc" }}>• {t}</div>
+          ))}
+          <div style={{ marginTop: 10, borderTop: "1px solid rgba(255,215,0,0.3)", paddingTop: 10 }}>
+            {ROWS.map((r,i) => <div key={i} style={{ color: "#ccc" }}><strong style={{ color: "#FFD700" }}>{r.name}</strong> — {r.desc}</div>)}
+          </div>
+        </div>
+      )}
+
+      {/* ── GAME GRID ── */}
+      <div style={{ maxWidth: 680, margin: "12px auto 0", padding: "0 8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 5, marginBottom: 5 }}>
+          <div style={{ background: "#CC1122", border: "3px solid #FFD700", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)" }}>
+            <span style={{ fontSize: 22 }}>🏀</span>
+          </div>
+          {COLUMNS.map((col, ci) => (
+            <div key={ci} style={{ background: col.color, borderRadius: 8, padding: "10px 4px", textAlign: "center", minHeight: 58, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: `3px solid ${col.border}`, boxShadow: "3px 3px 0px rgba(0,0,0,0.4)" }}>
+              <div style={{ fontWeight: 900, fontSize: "clamp(11px,2.5vw,15px)", color: "#fff", textTransform: "uppercase", textShadow: "1px 1px 0 rgba(0,0,0,0.5)" }}>{col.name}</div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginTop: 2, fontFamily: "'Arial', sans-serif" }}>{col.nickname}</div>
+            </div>
+          ))}
+        </div>
+        {ROWS.map((row, ri) => (
+          <div key={ri} style={{ display: "grid", gridTemplateColumns: gridCols, gap: 5, marginBottom: 5 }}>
+            <div style={{ background: "#1B2A6B", border: "3px solid #FFD700", borderRadius: 8, padding: "8px 6px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 88, boxShadow: "3px 3px 0px rgba(0,0,0,0.4)" }}>
+              <div style={{ fontWeight: 900, fontSize: 11, color: "#fff", textTransform: "uppercase", letterSpacing: 0.5 }}>{row.name}</div>
+              <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.5)", marginTop: 4, lineHeight: 1.4, fontFamily: "'Arial', sans-serif" }}>{row.desc}</div>
+            </div>
+            {COLUMNS.map((_, ci) => {
+              const k = `${ri}-${ci}`;
+              const cell = cells[k];
+              const isCorrect = cell?.status === "correct";
+              const isWrong   = cell?.status === "wrong";
+              const isLocked  = isCorrect || isWrong;
+              const isEmpty   = (ANSWER_POOL[k] || []).length === 0;
+              const isAct     = active === k;
+              let bg = isEmpty ? "#12203a" : "#1B2A6B";
+              let bd = isEmpty ? "#243050" : "#4a6aaf";
+              if (isCorrect) { bg = "#145a2e"; bd = "#22c55e"; }
+              if (isWrong)   { bg = "#5a0a0a"; bd = "#dc2626"; }
+              if (isAct)     { bg = "#2a3d7a"; bd = "#FFD700"; }
+              return (
+                <div key={ci} onClick={() => !isLocked && openCell(ri, ci)}
+                  style={{ background: bg, border: `3px solid ${bd}`, borderRadius: 8, minHeight: 88, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: isLocked ? "default" : "pointer", transition: "all 0.12s", padding: 6, textAlign: "center", boxShadow: "3px 3px 0px rgba(0,0,0,0.35)" }}
+                  onMouseEnter={e => { if (!isLocked && !isEmpty) { e.currentTarget.style.borderColor = "#FFD700"; e.currentTarget.style.background = "#2a3d7a"; } }}
+                  onMouseLeave={e => { if (!isLocked && !isAct) { e.currentTarget.style.borderColor = isEmpty ? "#243050" : "#4a6aaf"; e.currentTarget.style.background = isEmpty ? "#12203a" : "#1B2A6B"; } }}
+                >
+                  {isCorrect && <><div style={{ fontSize: 16, marginBottom: 3 }}>✅</div><div style={{ fontSize: 10, fontWeight: 700, color: "#4ade80", lineHeight: 1.3, fontFamily: "'Arial', sans-serif" }}>{cell.name}</div></>}
+                  {isWrong   && <><div style={{ fontSize: 18, marginBottom: 3 }}>❌</div><div style={{ fontSize: 9, color: "#f87171", fontWeight: 700, textTransform: "uppercase" }}>Locked Out</div></>}
+                  {!isLocked && isEmpty  && <div style={{ fontSize: 8.5, color: "#4a6aaf", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, fontFamily: "'Arial', sans-serif" }}>Coming Soon</div>}
+                  {!isLocked && !isEmpty && <div style={{ fontSize: 28, color: "#4a6aaf" }}>+</div>}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* ── INPUT MODAL ── */}
+      {active && !cells[active] && (
+        <div onClick={e => { if (e.target === e.currentTarget) { setActive(null); setFeedback(null); } }}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 100 }}>
+          <div style={{ background: "#1B2A6B", border: "4px solid #FFD700", borderRadius: 14, padding: "28px 24px", width: "100%", maxWidth: 420, boxShadow: "6px 6px 0px rgba(0,0,0,0.5)" }}>
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <div style={{ fontSize: 10, color: "rgba(255,215,0,0.7)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8, fontFamily: "'Arial', sans-serif" }}>You need a...</div>
+              <div style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.4, textTransform: "uppercase" }}>
+                <span style={{ color: "#60a5fa" }}>{activeInfo?.col.name}</span>
+                <span style={{ color: "rgba(255,255,255,0.4)", margin: "0 8px" }}>×</span>
+                <span style={{ color: "#FFD700" }}>{activeInfo?.row.name}</span>
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 6, fontFamily: "'Arial', sans-serif" }}>{activeInfo?.row.desc}</div>
+            </div>
+            <input ref={inputRef} value={inputVal}
+              onChange={e => { setInputVal(e.target.value); setFeedback(null); }}
+              onKeyDown={e => { if (e.key === "Enter") submit(); if (e.key === "Escape") { setActive(null); setFeedback(null); } }}
+              placeholder="Type a player's name..."
+              style={{ width: "100%", boxSizing: "border-box", background: "#0d1833", color: "#fff", border: "3px solid #4a6aaf", borderRadius: 8, padding: "13px 16px", fontSize: 15, outline: "none", fontFamily: "'Arial', sans-serif" }}
+              onFocus={e => e.target.style.borderColor = "#FFD700"}
+              onBlur={e => e.target.style.borderColor = "#4a6aaf"}
+            />
+            {feedback && (
+              <div style={{ marginTop: 12, padding: "11px 14px", borderRadius: 8, background: feedback.type === "correct" ? "#145a2e" : "#5a0a0a", color: feedback.type === "correct" ? "#4ade80" : "#fca5a5", fontWeight: 700, fontSize: 13, textAlign: "center", border: `2px solid ${feedback.type === "correct" ? "#22c55e" : "#dc2626"}`, fontFamily: "'Arial', sans-serif" }}>
+                {feedback.msg}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+              <button onClick={() => { setActive(null); setFeedback(null); }} style={{ flex: 1, padding: "13px 0", borderRadius: 8, background: "#0d1833", border: "2px solid #4a6aaf", color: "#aaa", fontWeight: 700, cursor: "pointer", fontSize: 13, fontFamily: "'Arial', sans-serif" }}>Cancel</button>
+              <button onClick={submit} style={{ flex: 2, padding: "13px 0", borderRadius: 8, background: "#CC1122", border: "2px solid #FFD700", color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, textTransform: "uppercase", letterSpacing: 1, boxShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>SUBMIT 🏀</button>
+            </div>
+            <div style={{ textAlign: "center", marginTop: 10, fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "'Arial', sans-serif" }}>Enter to submit • Escape to cancel</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── END GAME MODAL ── */}
+      {showEndGame && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 200, overflowY: "auto" }}>
+          <div style={{ background: "#1B2A6B", border: `4px solid ${verdict.color}`, borderRadius: 16, padding: "28px 20px", maxWidth: 560, width: "100%", textAlign: "center", boxShadow: `6px 6px 0px rgba(0,0,0,0.5)`, margin: "auto" }}>
+
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8, fontFamily: "'Arial', sans-serif" }}>Final Score</div>
+            <div style={{ fontSize: 34, fontWeight: 900, color: verdict.color, marginBottom: 4, textTransform: "uppercase", textShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>{verdict.label}</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginBottom: 20, fontFamily: "'Arial', sans-serif" }}>{verdict.sub}</div>
+
+            <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 22 }}>
+              {[
+                { val: correct,                   label: "CORRECT",   bg: "#145a2e", bd: "#22c55e", vc: "#4ade80", lc: "#86efac" },
+                { val: incorrect,                 label: "INCORRECT", bg: "#5a0a0a", bd: "#dc2626", vc: "#f87171", lc: "#fca5a5" },
+                { val: TOTAL_TILES - totalPlayed, label: "SKIPPED",   bg: "#0d1833", bd: "#4a6aaf", vc: "#aaa",    lc: "#666" },
+              ].map((s, i) => (
+                <div key={i} style={{ background: s.bg, border: `2px solid ${s.bd}`, borderRadius: 10, padding: "10px 14px", minWidth: 72, boxShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>
+                  <div style={{ fontSize: 30, fontWeight: 900, color: s.vc }}>{s.val}</div>
+                  <div style={{ fontSize: 9, color: s.lc, fontWeight: 700, letterSpacing: 1, fontFamily: "'Arial', sans-serif" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── REVEAL GRID ── */}
+            <div style={{ marginBottom: 16 }}>
+              {/* Column headers */}
+              <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr 1fr 1fr", gap: 4, marginBottom: 4 }}>
+                <div />
+                {COLUMNS.map((col, ci) => (
+                  <div key={ci} style={{ background: col.color, border: `2px solid ${col.border}`, borderRadius: 6, padding: "6px 2px", textAlign: "center" }}>
+                    <div style={{ fontWeight: 900, fontSize: 9, color: "#fff", textTransform: "uppercase" }}>{col.name}</div>
+                  </div>
+                ))}
+              </div>
+
+              {ROWS.map((row, ri) => (
+                <div key={ri} style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr 1fr 1fr", gap: 4, marginBottom: 4 }}>
+                  <div style={{ background: "#0d1833", border: "2px solid #FFD700", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: 54 }}>
+                    <div style={{ fontWeight: 900, fontSize: 8.5, color: "#fff", textTransform: "uppercase", lineHeight: 1.3 }}>{row.name}</div>
+                  </div>
+                  {COLUMNS.map((_, ci) => {
+                    const k = `${ri}-${ci}`;
+                    const cell = cells[k];
+                    const isCorrect  = cell?.status === "correct";
+                    const isWrong    = cell?.status === "wrong";
+                    const isEmpty    = (ANSWER_POOL[k] || []).length === 0;
+                    const revealAns  = revealMap ? revealMap[k] : null;
+                    const showReveal = !!revealMap && !isCorrect && !!revealAns;
+
+                    let bg = "#0d1833", bd = "#243050";
+                    if (isCorrect)   { bg = "#145a2e"; bd = "#22c55e"; }
+                    else if (showReveal) { bg = "#2a1a00"; bd = "#FFD700"; }
+                    else if (isWrong)    { bg = "#5a0a0a"; bd = "#dc2626"; }
+
+                    return (
+                      <div key={ci} style={{ background: bg, border: `2px solid ${bd}`, borderRadius: 6, minHeight: 54, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 4, textAlign: "center", transition: "all 0.25s" }}>
+                        {isCorrect && <>
+                          <div style={{ fontSize: 12 }}>✅</div>
+                          <div style={{ fontSize: 8.5, fontWeight: 700, color: "#4ade80", lineHeight: 1.2, fontFamily: "'Arial', sans-serif", marginTop: 2 }}>{cell.name}</div>
+                        </>}
+                        {!isCorrect && showReveal && <>
+                          <div style={{ fontSize: 10, marginBottom: 2 }}>💡</div>
+                          <div style={{ fontSize: 8.5, fontWeight: 700, color: "#FFD700", lineHeight: 1.2, fontFamily: "'Arial', sans-serif" }}>{revealAns}</div>
+                        </>}
+                        {!isCorrect && !showReveal && isWrong && <div style={{ fontSize: 14 }}>❌</div>}
+                        {!isCorrect && !showReveal && !isWrong && (
+                          <div style={{ fontSize: 9, color: isEmpty ? "#333" : "#4a6aaf", fontWeight: 700, fontFamily: "'Arial', sans-serif" }}>{isEmpty ? "N/A" : "—"}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+            {/* Reveal button */}
+            {!revealMap && hasRevealable && (
+              <button onClick={handleReveal} style={{ width: "100%", padding: "13px 0", borderRadius: 8, marginBottom: 12, background: "#2a1a00", border: "3px solid #FFD700", color: "#FFD700", fontWeight: 900, cursor: "pointer", fontSize: 14, textTransform: "uppercase", letterSpacing: 1.5, boxShadow: "3px 3px 0 rgba(0,0,0,0.4)", fontFamily: "'Arial Black', sans-serif" }}>
+                💡 Reveal Correct Answers
+              </button>
+            )}
+            {revealMap && (
+              <div style={{ fontSize: 10, color: "#FFD700", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12, fontFamily: "'Arial', sans-serif", opacity: 0.7 }}>
+                ✦ Correct answers revealed — no repeats ✦
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 10 }}>
+              {totalPlayed < TOTAL_TILES && (
+                <button onClick={() => setShowEndGame(false)} style={{ flex: 1, padding: "12px 0", borderRadius: 8, background: "#0d1833", border: "2px solid #4a6aaf", color: "#aaa", fontWeight: 700, cursor: "pointer", fontSize: 13, fontFamily: "'Arial', sans-serif" }}>Keep Playing</button>
+              )}
+              <button onClick={reset} style={{ flex: 2, padding: "12px 0", borderRadius: 8, background: "#CC1122", border: `2px solid ${verdict.color}`, color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, textTransform: "uppercase", letterSpacing: 1, boxShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>Play Again</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function navBtn(bg, color) {
+  return { background: bg, color, border: `2px solid ${color}`, borderRadius: 6, padding: "5px 14px", fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 1, boxShadow: "2px 2px 0 rgba(0,0,0,0.3)", fontFamily: "'Arial', sans-serif" };
+}
