@@ -12,12 +12,13 @@ Add a daily puzzle rotation to the existing immaculate grid game. Each day a new
 
 ## Data Structure — `puzzles.js`
 
-A new file `puzzles.js` lives alongside `players.js` in the project root. It exports a single global object `PUZZLES` keyed by date strings in `"YYYY-MM-DD"` format. Each entry contains everything that varies per day.
+A new file `puzzles.js` lives alongside `players.js` in the project root. It defines a single global object `PUZZLES` keyed by date strings in `"YYYY-MM-DD"` format.
 
 ```js
 const PUZZLES = {
   "2026-03-22": {
-    weekTheme: "WEEK 1: THIS IS MARCH!",
+    weekBadge: "WEEK 1: THIS IS MARCH",       // plain text, ~30 chars max (author responsibility)
+    gridLabel: "GRID #1: BLUE BLOOD BALLERS", // plain text, ~35 chars max (author responsibility)
     columns: [
       { name: "Duke",      nickname: "Blue Devils", color: "#00539B", border: "#1a7fd4" },
       { name: "UConn",     nickname: "Huskies",     color: "#000E2F", border: "#1a3a88" },
@@ -33,45 +34,104 @@ const PUZZLES = {
     answerPool: {
       "0-0": ["Christian Laettner", "J.J. Redick", /* ... */],
       "0-1": ["Kemba Walker", /* ... */],
-      // all 16 cells ("row-col" format, 0-indexed)
+      // all 16 cells, "row-col" format, 0-indexed
     }
   },
   "2026-03-23": {
-    weekTheme: "WEEK 1: THIS IS MARCH!",
-    columns: [ /* different teams */ ],
-    rows: [ /* different categories */ ],
-    answerPool: { /* 16 cells */ }
+    weekBadge: "WEEK 1: THIS IS MARCH",
+    gridLabel: "GRID #2: ...",
+    columns: [ /* 4 different teams */ ],
+    rows: [ /* 4 different categories */ ],
+    answerPool: { /* all 16 cells */ }
   }
 };
 ```
 
-**Adding a new day:** Add a new date-keyed entry to `puzzles.js` and push to GitHub. No changes to `index.html` needed.
+**Adding a new day:** Add a new date-keyed entry and push to GitHub. No changes to `index.html` needed.
 
-**Weekly theme:** All puzzles in a given week share the same `weekTheme` string. This controls the week badge text in the header. A new week = update `weekTheme` in new entries.
+**String fields:** Plain text only (no HTML). Rendered via React JSX `{WEEK_BADGE}` / `{GRID_LABEL}`, which auto-escapes. Length limits are author responsibility — no runtime enforcement.
+
+**Requirement:** `puzzles.js` must always contain at least one entry.
 
 ---
 
 ## Puzzle Loading Logic
 
-Added to `index.html` near the top of the React app, before any component renders:
+The loading logic runs **at the very top of the `<script type="text/babel">` block**, before all other `const` declarations and component definitions.
 
-1. Get today's date as `"YYYY-MM-DD"` using the user's local clock
-2. Look up `PUZZLES[today]`
-3. If not found, scan all keys in `PUZZLES`, filter to those ≤ today, sort descending, take the first (most recent)
-4. Extract `columns`, `rows`, `answerPool`, `weekTheme` from the selected puzzle
-5. Use these in place of the current hardcoded constants
+```js
+// --- Puzzle loader ---
+// Leading underscore = loader-only variables; do not reference below this block.
+const _today = new Date().toLocaleDateString('en-CA'); // "YYYY-MM-DD" in user's local timezone
+                                                        // Puzzle rolls over at midnight local time.
+                                                        // Users in different timezones see the puzzle
+                                                        // roll over at different moments — this is
+                                                        // intentional and accepted behavior.
+
+let _puzzle = null;
+if (typeof PUZZLES !== 'undefined' && Object.keys(PUZZLES).length > 0) {
+  _puzzle = PUZZLES[_today];
+  if (!_puzzle) {
+    // Fall back to most recent puzzle at or before today
+    const _past = Object.keys(PUZZLES).filter(k => k <= _today).sort().reverse();
+    _puzzle = _past.length > 0
+      ? PUZZLES[_past[0]]
+      : PUZZLES[Object.keys(PUZZLES).sort()[0]]; // all future-dated → use earliest available
+  }
+}
+
+const COLUMNS     = _puzzle ? _puzzle.columns    : [];
+const ROWS        = _puzzle ? _puzzle.rows       : [];
+const ANSWER_POOL = _puzzle ? _puzzle.answerPool : {};
+const WEEK_BADGE  = _puzzle ? _puzzle.weekBadge  : "—";
+const GRID_LABEL  = _puzzle ? _puzzle.gridLabel  : "—";
+// --- End loader ---
+```
+
+**Note on `ALL_PLAYERS`:** The existing line `const ALL_PLAYERS = typeof PLAYER_DB !== 'undefined' ? PLAYER_DB : [...new Set(Object.values(ANSWER_POOL).flat())]...` comes after this loader block in the Babel scope. Since `ANSWER_POOL` is declared by the loader before `ALL_PLAYERS`, this fallback continues to work correctly with no changes.
+
+**Fallback chain:**
+1. Today's date key exists → use it
+2. Past keys exist → use the most recent one before today
+3. All keys are future-dated → use the earliest available (prevents crash)
+4. `PUZZLES` undefined or empty → `_puzzle` stays `null`; app renders error state
 
 ---
 
 ## Changes to `index.html`
 
-**Add (1 line):** `<script src="puzzles.js"></script>` after the existing `<script src="players.js"></script>`
+**Add (1 line, in `<head>`):**
+```html
+<script src="puzzles.js"></script>
+```
+Place immediately after `<script src="players.js"></script>`. Must be synchronous — no `defer` or `async`. The Babel block reads `PUZZLES` at parse time.
 
-**Add (~10 lines):** Puzzle-loading function that runs before the React app initializes, sets the active puzzle based on today's date
+**Add (~15 lines):** The puzzle loader block above, at the very top of the `<script type="text/babel">` block.
 
-**Remove:** Hardcoded `COLUMNS`, `ROWS`, `ANSWER_POOL` constants — these move into `puzzles.js` as the `"2026-03-22"` entry
+**Remove (atomic — must happen in the same edit as adding the loader):**
+The three hardcoded constants at the top of the Babel block:
+```js
+const COLUMNS = [ ... ];    // ← delete
+const ROWS    = [ ... ];    // ← delete
+const ANSWER_POOL = { ... }; // ← delete
+```
+These move into `puzzles.js` and are re-declared by the loader under the same names. **Do not add the loader in one commit and remove the old declarations in another** — that would create a `const` redeclaration SyntaxError that breaks the page.
 
-**Update:** The week badge text currently hardcoded as `"WEEK 1: THIS IS MARCH!"` — wire it to `weekTheme` from the loaded puzzle
+**Update (2 strings in header JSX):**
+- Line 208: `"WEEK 1: THIS IS MARCH"` → `{WEEK_BADGE}`
+- Line 215: `"GRID #1: BLUE BLOOD BALLERS"` → `{GRID_LABEL}`
+
+**Add null guard (top of `App()` function's return statement, before the main div):**
+```jsx
+if (!_puzzle) return <div style={{ color: '#fff', textAlign: 'center', padding: 40 }}>Game unavailable — check back soon.</div>;
+```
+This replaces the entire page with a plain error message if `puzzles.js` failed to load or is empty. Place it as the very first line of the return, before all other JSX.
+
+---
+
+## Migration Plan
+
+When implementing, key the initial puzzle entry by the **date the file is first deployed**. Use any date at or before today — the fallback chain ensures the puzzle loads correctly regardless of which past date is used as the key. Move the current `COLUMNS`, `ROWS`, and `ANSWER_POOL` data from `index.html` into `puzzles.js` under that key. Day one game behavior is identical to today.
 
 ---
 
@@ -80,19 +140,12 @@ Added to `index.html` near the top of the React app, before any component render
 - All game logic: `validate()`, `buildRevealMap()`, `nc()` normalizer
 - All UI components and layout
 - All styling and theme colors
-- Autocomplete (still uses `PLAYER_DB` from `players.js`)
+- Autocomplete (`PLAYER_DB` from `players.js`)
 - Results screen, scoring, and share functionality
-- Fallback: `ALL_PLAYERS` already handles missing `PLAYER_DB` gracefully
 
 ---
 
 ## Out of Scope (future work)
 
-- **Replay prevention:** Tracking per-date completion in localStorage ("you already played today") — natural next feature, deliberately excluded to keep this build simple
+- **Replay prevention:** Per-date completion tracking in localStorage — natural next feature
 - **Player database with metadata:** Auto-computing answer pools from tagged player records — excluded in favor of manual curation for correctness
-
----
-
-## Migration Plan
-
-The current Duke/UConn/Villanova/UNC puzzle becomes the first entry in `puzzles.js` dated `"2026-03-22"`. Its data is cut from `index.html` and pasted into the new file. The game behavior on day one is identical to today.
