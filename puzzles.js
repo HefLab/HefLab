@@ -42,7 +42,7 @@ const PUZZLES = {
   "2026-03-23": {
     weekBadge: "WEEK 1: THIS IS MARCH",
     gridLabel: "GRID #2: DEUCE BALLERS",
-    cornerPhrase: "Ball Two Round.",
+    cornerPhrase: "Ball Two Round.\nTime To Square Up",
     columns: [
       { name: "Kentucky",       nickname: "Wildcats", color: "#0033A0", border: "#4472CA" },
       { name: "Kansas",         nickname: "Jayhawks", color: "#0051A5", border: "#1a6bcc" },
