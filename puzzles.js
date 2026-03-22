@@ -3,6 +3,7 @@
 // weekBadge: plain text, ~30 chars max. gridLabel: plain text, ~35 chars max.
 // ACTIVE_OVERRIDE: set to a "YYYY-MM-DD" string to force that puzzle live for everyone. Set to null to resume normal date-based loading.
 const ACTIVE_OVERRIDE = "2026-03-23";
+const SITE_NOTICE = null;
 const PUZZLES = {
   "2026-03-22": {
     weekBadge: "WEEK 1: THIS IS MARCH",
