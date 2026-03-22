@@ -124,6 +124,9 @@
       const [suggestions, setSuggestions] = useState([]);
       const [suggIdx, setSuggIdx] = useState(-1);
       const [acOpen, setAcOpen] = useState(false);
+      const [showNotice, setShowNotice] = useState(
+        typeof SITE_NOTICE === 'string' && SITE_NOTICE.length > 0
+      );
       const inputRef = useRef(null);
       const dropdownRef = useRef(null);
 
