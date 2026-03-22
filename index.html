@@ -49,7 +49,7 @@
     const GAME_URL = "https://lhefner4.github.io/Mostly-Ball-s-V1/";
     const nc = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-    const ALL_PLAYERS = typeof PLAYER_DB !== 'undefined' ? PLAYER_DB : [...new Set(Object.values(ANSWER_POOL).flat())].sort((a,b) => a.localeCompare(b));
+    const ALL_PLAYERS = [...new Set([...(typeof PLAYER_DB !== 'undefined' ? PLAYER_DB : []), ...Object.values(ANSWER_POOL).flat()])].sort((a,b) => a.localeCompare(b));
 
     const buildRevealMap = (cells) => {
       const assigned = new Set();
