@@ -5,6 +5,7 @@ const PUZZLES = {
   "2026-03-22": {
     weekBadge: "WEEK 1: THIS IS MARCH",
     gridLabel: "GRID #1: BLUE BLOOD BALLERS",
+    cornerPhrase: "First time player, Long time Baller... Welcome.",
     columns: [
       { name: "Duke",      nickname: "Blue Devils", color: "#00539B", border: "#1a7fd4" },
       { name: "UConn",     nickname: "Huskies",     color: "#000E2F", border: "#1a3a88" },
@@ -39,6 +40,7 @@ const PUZZLES = {
   "2026-03-23": {
     weekBadge: "WEEK 1: THIS IS MARCH",
     gridLabel: "GRID #2: DEUCE BALLERS",
+    cornerPhrase: "First time player, Long time Baller... Welcome.",
     columns: [
       { name: "Kentucky",       nickname: "Wildcats", color: "#0033A0", border: "#4472CA" },
       { name: "Kansas",         nickname: "Jayhawks", color: "#0051A5", border: "#1a6bcc" },

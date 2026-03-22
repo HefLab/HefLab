@@ -40,8 +40,9 @@
     const COLUMNS     = _puzzle ? _puzzle.columns    : [];
     const ROWS        = _puzzle ? _puzzle.rows       : [];
     const ANSWER_POOL = _puzzle ? _puzzle.answerPool : {};
-    const WEEK_BADGE  = _puzzle ? _puzzle.weekBadge  : "—";
-    const GRID_LABEL  = _puzzle ? _puzzle.gridLabel  : "—";
+    const WEEK_BADGE     = _puzzle ? _puzzle.weekBadge    : "—";
+    const GRID_LABEL     = _puzzle ? _puzzle.gridLabel    : "—";
+    const CORNER_PHRASE  = _puzzle ? _puzzle.cornerPhrase : "";
     // --- End loader ---
 
     const TOTAL_TILES = 16;
@@ -250,7 +251,8 @@
           {/* GAME GRID */}
           <div style={{ maxWidth: 680, margin: "12px auto 0", padding: "0 8px" }}>
             <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 5, marginBottom: 5 }}>
-              <div style={{ background: "#CC1122", border: "3px solid #FFD700", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)" }}>
+              <div style={{ background: "#CC1122", border: "3px solid #FFD700", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)", padding: "6px" }}>
+                {CORNER_PHRASE && <div style={{ fontSize: 8, color: "#ffffff", fontWeight: 400, textAlign: "center", lineHeight: 1.4, fontFamily: "'Arial', sans-serif" }}>{CORNER_PHRASE}</div>}
               </div>
               {COLUMNS.map((col, ci) => (
                 <div key={ci} style={{ background: "#1B2A6B", borderRadius: 8, padding: "10px 4px", textAlign: "center", minHeight: 58, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "3px solid #FFD700", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)" }}>
