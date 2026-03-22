@@ -125,6 +125,7 @@
       const [suggIdx, setSuggIdx] = useState(-1);
       const [acOpen, setAcOpen] = useState(false);
       const inputRef = useRef(null);
+      const dropdownRef = useRef(null);
 
       const correct     = Object.values(cells).filter(c => c?.status === "correct").length;
       const incorrect   = Object.values(cells).filter(c => c?.status === "wrong").length;
@@ -137,6 +138,13 @@
       useEffect(() => {
         if (active) setTimeout(() => inputRef.current?.focus(), 60);
       }, [active]);
+
+      useEffect(() => {
+        if (suggIdx >= 0 && dropdownRef.current) {
+          const highlighted = dropdownRef.current.querySelector('[data-highlighted="true"]');
+          if (highlighted) highlighted.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }, [suggIdx]);
 
       const openCell = (r, c) => {
         const k = `${r}-${c}`;
@@ -323,7 +331,7 @@
                           setInputVal(v); setFeedback(null); setSuggIdx(-1);
                           const q = v.trim().toLowerCase();
                           if (q.length >= 3) {
-                            setSuggestions(ALL_PLAYERS.filter(p => p.toLowerCase().startsWith(q) || p.toLowerCase().split(" ").some(w => w.startsWith(q))).slice(0, 4));
+                            setSuggestions(ALL_PLAYERS.filter(p => p.toLowerCase().startsWith(q) || p.toLowerCase().split(" ").some(w => w.startsWith(q))).slice(0, 30));
                             setAcOpen(true);
                           } else {
                             setSuggestions([]); setAcOpen(false);
@@ -349,9 +357,13 @@
                         onBlur={e => { e.target.style.borderColor = "#4a6aaf"; setTimeout(() => { setSuggestions([]); setSuggIdx(-1); setAcOpen(false); }, 150); }}
                       />
                       {showDropdown && (
-                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#0d1833", border: "3px solid #FFD700", borderTop: "none", borderBottomLeftRadius: 8, borderBottomRightRadius: 8, zIndex: 999, maxHeight: 210, overflowY: "auto", boxShadow: "4px 6px 0px rgba(0,0,0,0.5)" }}>
+                        <div ref={dropdownRef} style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#0d1833", border: "3px solid #FFD700", borderTop: "none", borderBottomLeftRadius: 8, borderBottomRightRadius: 8, zIndex: 999, maxHeight: 196, overflowY: "auto", WebkitOverflowScrolling: "touch", boxShadow: "4px 6px 0px rgba(0,0,0,0.5)" }}>
+                          <div style={{ padding: "5px 16px 4px", fontSize: 10, color: "rgba(255,215,0,0.45)", letterSpacing: 1, textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.06)", fontFamily: "'Arial', sans-serif" }}>
+                            {suggestions.length} player{suggestions.length !== 1 ? "s" : ""} found{suggestions.length > 4 ? " — scroll for more ▼" : ""}
+                          </div>
                           {suggestions.map((name, i) => (
                             <div key={name}
+                              data-highlighted={i === suggIdx ? "true" : "false"}
                               onMouseDown={() => { setInputVal(name); setSuggestions([]); setSuggIdx(-1); setAcOpen(false); }}
                               style={{ padding: "10px 16px", fontSize: 13, color: i === suggIdx ? "#fff" : "#ccc", background: i === suggIdx ? "rgba(255,215,0,0.12)" : "transparent", cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", fontFamily: "'Arial', sans-serif" }}>
                               {name}
@@ -376,7 +388,7 @@
                   <button onClick={() => { setActive(null); setFeedback(null); }} style={{ flex: 1, padding: "13px 0", borderRadius: 8, background: "#0d1833", border: "2px solid #4a6aaf", color: "#aaa", fontWeight: 700, cursor: "pointer", fontSize: 13, fontFamily: "'Arial', sans-serif" }}>Cancel</button>
                   <button onClick={submit} style={{ flex: 2, padding: "13px 0", borderRadius: 8, background: "#CC1122", border: "2px solid #FFD700", color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, textTransform: "uppercase", letterSpacing: 1, boxShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>SUBMIT 🏀</button>
                 </div>
-                <div style={{ textAlign: "center", marginTop: 10, fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "'Arial', sans-serif" }}>Enter to submit • Escape to cancel</div>
+                <div style={{ textAlign: "center", marginTop: 10, fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "'Arial', sans-serif" }}>↑↓ arrows or scroll to browse • Enter to select • Escape to cancel</div>
               </div>
             </div>
           )}
