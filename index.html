@@ -149,6 +149,13 @@
         }
       }, [suggIdx]);
 
+      useEffect(() => {
+        if (!showNotice) return;
+        const onKey = (e) => { if (e.key === 'Escape') setShowNotice(false); };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+      }, [showNotice]);
+
       const openCell = (r, c) => {
         const k = `${r}-${c}`;
         if (cells[k]) return;
@@ -514,6 +521,8 @@
               }}
             >
               <div
+                role="dialog"
+                aria-modal="true"
                 onClick={e => e.stopPropagation()}
                 style={{
                   background: "#1B2A6B",
@@ -537,6 +546,7 @@
                   {SITE_NOTICE}
                 </p>
                 <button
+                  autoFocus
                   onClick={() => setShowNotice(false)}
                   style={{
                     background: "#FFD700",
