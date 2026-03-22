@@ -323,7 +323,7 @@
                           setInputVal(v); setFeedback(null); setSuggIdx(-1);
                           const q = v.trim().toLowerCase();
                           if (q.length >= 3) {
-                            setSuggestions(ALL_PLAYERS.filter(p => p.toLowerCase().includes(q)).slice(0, 6));
+                            setSuggestions(ALL_PLAYERS.filter(p => p.toLowerCase().split(" ").some(w => w.startsWith(q))).slice(0, 6));
                             setAcOpen(true);
                           } else {
                             setSuggestions([]); setAcOpen(false);
