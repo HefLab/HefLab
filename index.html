@@ -152,6 +152,17 @@
       return { token: tokenRef.current, nickname, showModal, saveNickname };
     }
 
+    async function submitScore(token, name, correct, puzzleDate) {
+      try {
+        await supabaseClient
+          .from('scores')
+          .upsert(
+            { player_token: token, player_name: name, correct, puzzle_date: puzzleDate },
+            { onConflict: 'player_token,puzzle_date', ignoreDuplicates: true }
+          );
+      } catch (e) { /* silent */ }
+    }
+
     function App() {
       const { nickname, showModal, saveNickname } = usePlayerIdentity();
       const [showPopover, setShowPopover] = useState(false);
