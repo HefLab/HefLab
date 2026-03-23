@@ -234,9 +234,8 @@
 
       useEffect(() => {
         if (totalPlayed === TOTAL_TILES) {
-          submitScore(token, nickname, correct, _today);
+          submitScore(token, nickname, correct, _today).then(() => setRefreshKey(k => k + 1));
           setTimeout(() => setShowEndGame(true), 600);
-          setRefreshKey(k => k + 1);
         }
       }, [totalPlayed]);
 
