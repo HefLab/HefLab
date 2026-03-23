@@ -468,7 +468,7 @@
             </div>
             <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
               <button onClick={() => setShowRules(p => !p)} style={navBtn("#1B2A6B", "#FFD700")}>{showRules ? "Hide Rules" : "How to Play"}</button>
-              {totalPlayed > 0 && totalPlayed < TOTAL_TILES && <button onClick={() => setShowEndGame(true)} style={navBtn("#5a0a0a", "#f87171")}>End Game</button>}
+              {totalPlayed > 0 && totalPlayed < TOTAL_TILES && <button onClick={() => { submitScore(token, nickname, correct, _today).then(() => setRefreshKey(k => k + 1)); setShowEndGame(true); }} style={navBtn("#5a0a0a", "#f87171")}>End Game</button>}
               <button onClick={reset} style={navBtn("#5a0a0a", "#f87171")}>Reset</button>
             </div>
           </div>
