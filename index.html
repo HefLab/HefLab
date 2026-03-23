@@ -225,7 +225,7 @@
       );
       const [refreshKey, setRefreshKey] = useState(0);
       const [showLeaderboard, setShowLeaderboard] = useState(false);
-      const { entries, totalCount, playerRank, loading: lbLoading, error: lbError } = useLeaderboard(_today, token, refreshKey);
+      const { entries, totalCount, loading: lbLoading, error: lbError } = useLeaderboard(_today, token, refreshKey);
       const inputRef = useRef(null);
       const dropdownRef = useRef(null);
 
