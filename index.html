@@ -144,6 +144,12 @@
     }
 
     function App() {
+      const { token, nickname, showModal, saveNickname } = usePlayerIdentity();
+      const [showPopover, setShowPopover] = useState(false);
+      const [modalInput, setModalInput] = useState('');
+      const [modalError, setModalError] = useState('');
+      const [popoverInput, setPopoverInput] = useState('');
+      const [popoverError, setPopoverError] = useState('');
       const [cells, setCells] = useState({});
       const [used, setUsed] = useState(new Set());
       const [active, setActive] = useState(null);
