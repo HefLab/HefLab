@@ -112,6 +112,38 @@
       return { background: bg, color, border: `2px solid ${color}`, borderRadius: 6, padding: "5px 14px", fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: 1, boxShadow: "2px 2px 0 rgba(0,0,0,0.3)", fontFamily: "'Arial', sans-serif" };
     }
 
+    function usePlayerIdentity() {
+      const lsGet = (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } };
+      const lsSet = (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} };
+
+      const tokenRef = useRef(null);
+      if (!tokenRef.current) {
+        let t = lsGet('player_token');
+        if (!t) {
+          t = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+              });
+          lsSet('player_token', t);
+        }
+        tokenRef.current = t;
+      }
+
+      const stored = lsGet('player_nickname');
+      const [nickname, setNickname] = useState(stored || '');
+      const [showModal, setShowModal] = useState(!stored);
+
+      const saveNickname = (val) => {
+        lsSet('player_nickname', val);
+        setNickname(val);
+        setShowModal(false);
+      };
+
+      return { token: tokenRef.current, nickname, showModal, saveNickname };
+    }
+
     function App() {
       const [cells, setCells] = useState({});
       const [used, setUsed] = useState(new Set());
