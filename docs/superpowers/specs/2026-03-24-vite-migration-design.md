@@ -25,15 +25,23 @@ MOSTLY BALL/
 │   └── workflows/
 │       └── deploy.yml              ← auto-build + deploy on push to main
 │
+├── public/
+│   ├── retro-composite.png         ← static asset served at root URL (used in Header CSS)
+│   ├── retro-left.png
+│   ├── retro-right.png
+│   └── retro-overlay.png
+│
 ├── src/
 │   ├── main.jsx                    ← ReactDOM.createRoot entry point
 │   ├── App.jsx                     ← orchestrator: all game state, renders sub-components
 │   │
 │   ├── components/
-│   │   ├── Header.jsx              ← retro banner, week badge, grid label, corner phrase
+│   │   ├── Header.jsx              ← retro banner, week badge, grid label, corner phrase, nickname display + change popover
 │   │   ├── Grid.jsx                ← 4×4 tile grid + column/row headers + autocomplete input
 │   │   ├── ResultsScreen.jsx       ← end-game score, verdict, share button, leaderboard
 │   │   ├── NicknameModal.jsx       ← first-time player identity setup modal
+│   │   ├── NicknamePopover.jsx     ← inline nickname display + gear icon + change-nickname popover
+│   │   ├── SiteNoticeModal.jsx     ← site-wide notice popup (driven by SITE_NOTICE in puzzles.js)
 │   │   └── LeaderboardPanel.jsx    ← leaderboard table, rank, total count
 │   │
 │   ├── hooks/
@@ -41,13 +49,14 @@ MOSTLY BALL/
 │   │   └── useLeaderboard.js       ← Supabase leaderboard fetch, rank resolution
 │   │
 │   ├── utils/
-│   │   ├── validate.js             ← validate(), nc(), buildRevealMap(), getVerdict()
+│   │   ├── validate.js             ← validate(), nc(), buildRevealMap(), getVerdict(), validateNickname()
 │   │   ├── storage.js              ← lsGet(), lsSet()
-│   │   └── puzzle.js               ← loadPuzzle(): resolves today's puzzle from PUZZLES
+│   │   ├── puzzle.js               ← loadPuzzle(puzzles, activeOverride): resolves today's puzzle
+│   │   └── supabase.js             ← createClient() instance + submitScore() async function
 │   │
 │   ├── data/
 │   │   ├── players.js              ← moved from root; export default PLAYER_DB
-│   │   └── puzzles.js              ← moved from root; export default PUZZLES
+│   │   └── puzzles.js              ← moved from root; export default { PUZZLES, ACTIVE_OVERRIDE, SITE_NOTICE }
 │   │
 │   └── styles/
 │       └── main.css                ← extracted from index.html <style> block
@@ -55,15 +64,19 @@ MOSTLY BALL/
 
 ## Component Responsibilities
 
-**`App.jsx`** — Orchestrator only. Holds all game state (`cells`, `used`, `active`, `inputVal`, `feedback`, game phase). Calls `loadPuzzle()` at top level. Passes data and handlers to sub-components as props. Imports and calls `usePlayerIdentity` and `useLeaderboard`.
+**`App.jsx`** — Orchestrator only. Holds all game state (`cells`, `used`, `active`, `inputVal`, `feedback`, `showNotice`, game phase). Calls `loadPuzzle()` at top level. Passes data and handlers to sub-components as props. Imports and calls `usePlayerIdentity` and `useLeaderboard`. Calls `submitScore()` on game end.
 
-**`Header.jsx`** — Receives `weekBadge`, `gridLabel`, `cornerPhrase` as props. Renders retro composite banner with radial overlay, badge, label.
+**`Header.jsx`** — Receives `weekBadge`, `gridLabel`, `cornerPhrase`, `nickname`, `showPopover`, `popoverInput`, `popoverError`, `onPopoverSave`, `onPopoverToggle`. Renders retro composite banner with radial overlay, badge, label, and the `NicknamePopover` component.
 
 **`Grid.jsx`** — Receives `cells`, `columns`, `rows`, `active`, `inputVal`, `onTileClick`, `onSubmit`, `onInputChange`. Renders 4×4 grid with column/row headers and the autocomplete input field.
 
 **`ResultsScreen.jsx`** — Receives `correct`, `cells`, `nickname`, and leaderboard props. Renders end-game score, verdict message, share button, and leaderboard.
 
-**`NicknameModal.jsx`** — Receives `onSave`, `error`. Renders the first-time nickname input overlay.
+**`NicknameModal.jsx`** — Receives `onSave`, `error`. Renders the first-time nickname input overlay shown when no nickname exists in localStorage.
+
+**`NicknamePopover.jsx`** — Receives `nickname`, `show`, `input`, `error`, `onToggle`, `onSave`. Renders the settings gear icon, current nickname display, and the inline popover for changing an existing nickname.
+
+**`SiteNoticeModal.jsx`** — Receives `notice` (string), `onClose`. Renders the site-wide notice popup. Only shown when `SITE_NOTICE` is a non-empty string.
 
 **`LeaderboardPanel.jsx`** — Receives `entries`, `playerRank`, `totalCount`, `loading`. Renders the leaderboard table with rank highlights.
 
@@ -75,25 +88,37 @@ MOSTLY BALL/
 
 ## Data Files
 
-`players.js` and `puzzles.js` move from root to `src/data/` and become ES modules:
+`players.js` and `puzzles.js` move from root to `src/data/` and become ES modules.
 
 ```js
-// players.js
-export default [ /* ... */ ]
+// src/data/players.js
+export default [ /* PLAYER_DB array */ ]
 
-// puzzles.js
-export default { /* ... */ }
+// src/data/puzzles.js
+export const PUZZLES = { /* date-keyed puzzle entries */ }
+export const ACTIVE_OVERRIDE = "2026-03-23"  // or null if not active
+export const SITE_NOTICE = "..."             // or "" if no notice
 ```
 
-**Important:** The `build-puzzle` skill currently writes `const PUZZLES = {...}` global syntax to `puzzles.js`. After migration, the write template must be updated to use `export default { ... }` instead.
+**Important:** The `build-puzzle` skill currently writes `const PUZZLES = {...}` global syntax to `puzzles.js`. After migration, the write template must be updated to use `export const PUZZLES = { ...existing, [newDate]: newEntry }` syntax instead. `ACTIVE_OVERRIDE` and `SITE_NOTICE` are manually maintained by the developer and should not be touched by the skill.
 
 ## Utilities
 
-**`validate.js`** — Exports `validate()`, `nc()`, `buildRevealMap()`, `getVerdict()`. Pure functions, no changes to logic.
+**`validate.js`** — Exports `validate()`, `nc()`, `buildRevealMap()`, `getVerdict()`, `validateNickname()`. Pure functions, no logic changes.
 
 **`storage.js`** — Exports `lsGet()`, `lsSet()`. Pure functions.
 
-**`puzzle.js`** — Exports `loadPuzzle(puzzles)`. Resolves today's date (with `?date=` param and `ACTIVE_OVERRIDE` support), finds the matching puzzle entry, returns structured puzzle object. Replaces the inline `_puzzle` / `_today` loader block currently at the top of the script.
+**`puzzle.js`** — Exports `loadPuzzle(puzzles, activeOverride)`. Accepts the full `PUZZLES` object and the `ACTIVE_OVERRIDE` string (or null). Resolves today's date via `?date=` URL param or `activeOverride`, finds the matching puzzle entry (or nearest past entry), returns `{ columns, rows, answerPool, weekBadge, gridLabel, cornerPhrase }`.
+
+**`supabase.js`** — Creates and exports the Supabase client instance. Also exports `submitScore(token, name, correct, puzzleDate)` async function. Supabase URL and anon key are hardcoded here (the anon key is a public publishable key — not a secret, no `.env` needed). Both were previously inline in `index.html`.
+
+## Static Assets
+
+All images referenced by URL in CSS or inline styles must live in the `public/` folder so Vite copies them to `dist/` at their original path. The `retro-composite.png` background in `Header.jsx` is the critical one — it's referenced as `url('retro-composite.png')` in the background style.
+
+After migration, all references become `url('/retro-composite.png')` (the leading `/` is required — Vite resolves `public/` assets from root, and this differs from the current no-build convention where no leading slash is used).
+
+`peaceiris/actions-gh-pages` automatically adds a `.nojekyll` file to the `gh-pages` branch, preventing Jekyll from stripping Vite's `_assets/` directory.
 
 ## Vite Config
 
@@ -135,7 +160,7 @@ jobs:
           publish_dir: ./dist
 ```
 
-Pushes built `dist/` to a `gh-pages` branch. No secrets to configure — `GITHUB_TOKEN` is built-in.
+Pushes built `dist/` to a `gh-pages` branch. No secrets to configure — `GITHUB_TOKEN` is built-in. The action automatically adds `.nojekyll` to the `gh-pages` branch.
 
 **Post-migration GitHub setting:** In repo Settings → Pages, change source branch from `main` to `gh-pages`.
 
@@ -143,6 +168,11 @@ Pushes built `dist/` to a `gh-pages` branch. No secrets to configure — `GITHUB
 
 ```json
 {
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -157,28 +187,31 @@ Pushes built `dist/` to a `gh-pages` branch. No secrets to configure — `GITHUB
 
 ## Migration Sequence
 
-1. `npm create vite@latest` scaffold into a temp folder; copy config files into project root
-2. Install dependencies (`npm install`)
-3. Extract `<style>` block → `src/styles/main.css`
-4. Move `players.js`, `puzzles.js` → `src/data/`; convert to `export default`
-5. Extract utilities → `src/utils/validate.js`, `storage.js`, `puzzle.js`
-6. Extract hooks → `src/hooks/usePlayerIdentity.js`, `useLeaderboard.js`
-7. Extract components → `src/components/` (Header, Grid, ResultsScreen, NicknameModal, LeaderboardPanel)
-8. Build `App.jsx` as orchestrator importing all of the above
-9. Write `src/main.jsx` entry point
-10. Write minimal `index.html` shell
-11. Write `vite.config.js`
-12. Add `.github/workflows/deploy.yml`
-13. Run `npm run dev` locally to verify game works
-14. Commit, push to `main`, verify Actions deploy
-15. Flip GitHub Pages source to `gh-pages` branch
-16. Update `build-puzzle` skill write template for new `puzzles.js` export format
+1. Scaffold Vite project into a temp folder (`npm create vite@latest`); copy `package.json`, `vite.config.js` into project root
+2. Run `npm install`
+3. Copy background images → `public/` folder
+4. Extract `<style>` block → `src/styles/main.css`; update any relative image URLs to `/retro-composite.png` (leading slash)
+5. Move `players.js` → `src/data/players.js`; convert to `export default`
+6. Move `puzzles.js` → `src/data/puzzles.js`; convert to named exports (`PUZZLES`, `ACTIVE_OVERRIDE`, `SITE_NOTICE`)
+7. Extract utilities → `src/utils/validate.js` (incl. `validateNickname`), `storage.js`, `puzzle.js`, `supabase.js`
+8. Extract hooks → `src/hooks/usePlayerIdentity.js`, `useLeaderboard.js`
+9. Extract components → `src/components/` (Header, Grid, ResultsScreen, NicknameModal, NicknamePopover, SiteNoticeModal, LeaderboardPanel)
+10. Build `App.jsx` as orchestrator importing all of the above
+11. Write `src/main.jsx` entry point
+12. Write minimal `index.html` shell
+13. Add `.github/workflows/deploy.yml`
+14. Run `npm run dev` locally — verify game works end to end
+15. Commit, push to `main`, verify Actions deploy succeeds
+16. In GitHub repo Settings → Pages, switch source branch to `gh-pages`
+17. Update `build-puzzle` skill write template for new `puzzles.js` export format
 
 ## Verification
 
 - `npm run dev` — game loads locally, all 16 tiles interactive, autocomplete works
 - Submit a correct answer — score updates, tile marks correct
 - Play through all 16 tiles — results screen appears, score submits to Supabase
-- Check leaderboard renders with player rank
+- Leaderboard renders with player rank
+- Nickname modal appears on first visit; gear icon + popover works for returning users
+- Site notice modal appears if `SITE_NOTICE` is non-empty
 - Push to `main` — GitHub Actions workflow passes, live URL updates within ~60 seconds
-- Verify `?date=YYYY-MM-DD` param still works for puzzle date override
+- Verify `?date=YYYY-MM-DD` URL param still works for puzzle date override
