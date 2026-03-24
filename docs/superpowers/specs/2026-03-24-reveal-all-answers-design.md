@@ -71,17 +71,27 @@ export const buildRevealMap = (cells, answerPool, rows, columns) => {
 
 ### 2. `src/components/ResultsScreen.jsx` — cell rendering
 
-**Current:** Renders a single `revealAns` string in gold for non-correct cells only.
+**Current:** `showReveal = !!revealMap && !isCorrect && !!revealAns` — excludes correct cells.
 
-**New:** Renders a stacked list for all revealed cells:
+**New:** `showReveal = !!revealMap && !!revealMap[k]` — include correct cells too. The guard `!isCorrect` must be removed.
+
+Rendering changes:
 - `revealMap[k]` is now an array
-- First item in correct cells: green + bold
-- All other items: gold, slightly smaller font
-- Correct cells lose their special "player answered" single-name rendering — they now show the full list with the player's answer highlighted at top
+- For correct cells: first item (player's answer) in green + bold, rest in gold below
+- For wrong/unanswered cells: all items in gold
+- The red "X" for wrong cells disappears post-reveal (correct behavior — the answer list replaces it)
 
-### 3. `src/components/Grid.jsx`
+**Banner text** (lines 92–95): Remove or change the "Correct answers revealed — no repeats" text. The new behavior intentionally shows all answers for every cell, so the same player name may appear in multiple cells. A neutral replacement: `"All correct answers revealed"`.
 
-Check if `revealMap` is used during active play. If so, apply the same array-based rendering. If it's only used in ResultsScreen, no change needed here.
+### 3. `src/App.jsx` — `hasRevealable`
+
+**Current:** `hasRevealable = incorrect > 0 || (TOTAL_TILES - totalPlayed) > 0` — hides the Reveal button for a perfect game (all 16 correct).
+
+**Decision:** Keep this behavior as-is. A player who answered all 16 correctly doesn't need the reveal. The button only appears when there are missed or unanswered tiles.
+
+### 4. `src/components/Grid.jsx`
+
+`revealMap` is accepted as a prop in Grid but is never read in its render logic — no change needed here.
 
 ---
 
