@@ -92,7 +92,7 @@ If any single row has **2 or more cells** that are EMPTY or have fewer than 3 HI
 
 Action:
 - Report which category is the problem and show its cell-by-cell results
-- Options: (A) swap the category and restart all research, (B) continue anyway
+- Options: (A) swap the category and re-research the 4 cells in that row only (other columns' results are preserved), (B) continue anyway
 
 **Rule 2 — Broken team (column problem):**
 If any single column has **3 or more cells** that are EMPTY or have fewer than 3 HIGH players → **soft pause**.
@@ -110,7 +110,7 @@ Action:
 
 | autonomyMode | UNCERTAIN handling | EMPTY handling |
 |---|---|---|
-| `full` | Auto-include all UNCERTAIN | Surface EMPTY cells only |
+| `full` | Auto-include all UNCERTAIN | Surface EMPTY cells only (EMPTY cells always surface regardless of mode) |
 | `checkin` | Auto-include all UNCERTAIN | Surface EMPTY cells only |
 | `manual` | Review one-by-one (unchanged) | Review one-by-one (unchanged) |
 
