@@ -92,7 +92,7 @@ export const PUZZLES = {
       { name: "BIG 3 BALL",   desc: "Went on to play with a member of the Miami Heat Big 3 in the NBA" },
     ],
     answerPool: {
-      "0-0": ["Lee Humphrey","Walter Clayton Jr.","Taurean Green"],
+      "0-0": ["Lee Humphrey","Walter Clayton Jr.","Taurean Green","Brett Nelson","Anthony Roberson","Kenny Boynton","KeVaughn Allen","Noah Locke"],
       "0-1": ["Glen Rice","Nik Stauskas","Duncan Robinson","Derrick Walton Jr.","Trey Burke","Jordan Poole","Caris LeVert","Muhammad-Ali Abdur-Rahkman","Zavier Simpson","Jett Howard","Elliot Cadeau","Nimari Burnett","Trey McKenney"],
       "0-2": ["Steve Kerr","Damon Stoudamire","Jason Gardner","Salim Stoudamire"],
       "0-3": ["Bryce Alford","Jason Kapono","Arron Afflalo"],
