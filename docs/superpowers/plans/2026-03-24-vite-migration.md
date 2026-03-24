@@ -949,7 +949,7 @@ export default function App() {
 
   return (
     <div style={bgStyle}>
-      <SiteNoticeModal notice={SITE_NOTICE} show={showNotice} onClose={() => setShowNotice(false)} />
+      {showNotice && <SiteNoticeModal notice={SITE_NOTICE} onClose={() => setShowNotice(false)} />}
       <Header
         weekBadge={weekBadge} gridLabel={gridLabel} rows={rows}
         correct={correct} incorrect={incorrect} totalPlayed={totalPlayed} totalTiles={TOTAL_TILES}
@@ -971,7 +971,8 @@ export default function App() {
         suggestions={suggestions} suggIdx={suggIdx} acOpen={acOpen}
         inputRef={inputRef} dropdownRef={dropdownRef}
         onTileClick={openCell} onInputChange={handleInputChange}
-        onSubmit={submit} onKeyDown={handleKeyDown} onSuggestionClick={handleSuggestionClick}
+        onSubmit={submit} onKeyDown={handleKeyDown}
+        onCancel={() => { setActive(null); setFeedback(null) }}
         revealMap={revealMap} cornerPhrase={cornerPhrase}
       />
       {showEndGame && (
