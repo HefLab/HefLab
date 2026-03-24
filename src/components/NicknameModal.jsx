@@ -3,9 +3,6 @@ export default function NicknameModal({ modalInput, setModalInput, modalError, o
     <div style={{ minHeight: '100vh', background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily }}
          role="dialog" aria-modal="true" aria-label="Enter your nickname">
       <div style={{ maxWidth: 360, width: '90%', textAlign: 'center' }}>
-        <div style={{ fontSize: 22, fontWeight: 900, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, fontFamily: "'Arial Black', sans-serif" }}>
-          You Think You Know Ball?
-        </div>
         <div style={{ background: '#1B2A6B', border: '3px solid #FFD700', borderRadius: 12, padding: '28px 24px 22px', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', fontFamily: "'Arial', sans-serif", lineHeight: 1.65, marginBottom: 24 }}>
             Welcome to the{' '}
