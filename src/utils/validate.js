@@ -7,18 +7,20 @@ export const validateNickname = (val) => {
 
 // answerPool, rows, columns are passed in from App — avoids circular imports
 export const buildRevealMap = (cells, answerPool, rows, columns) => {
-  const assigned = new Set()
   const map = {}
   for (let ri = 0; ri < rows.length; ri++) {
     for (let ci = 0; ci < columns.length; ci++) {
       const k = `${ri}-${ci}`
-      const cell = cells[k]
-      const isCorrect = cell?.status === "correct"
       const pool = answerPool[k] || []
-      if (isCorrect || pool.length === 0) continue
-      const pick = pool.find(a => !assigned.has(nc(a)))
-      if (pick) { map[k] = pick; assigned.add(nc(pick)) }
-      else { map[k] = pool[0] }
+      if (pool.length === 0) continue
+      const cell = cells[k]
+      const playerAnswer = cell?.status === 'correct' ? cell.name : null
+      if (playerAnswer) {
+        const rest = pool.filter(a => nc(a) !== nc(playerAnswer))
+        map[k] = [playerAnswer, ...rest]
+      } else {
+        map[k] = [...pool]
+      }
     }
   }
   return map
