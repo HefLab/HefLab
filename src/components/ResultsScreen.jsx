@@ -1,9 +1,13 @@
+import { useState } from 'react'
+
 export default function ResultsScreen({
   correct, totalTiles, totalPlayed, cells, columns, rows, answerPool, revealMap,
   verdict, pct, gridLabel, nickname,
   copyToast, onCopyResults, onReset, onKeepPlaying, hasRevealable, onReveal,
   entries, totalCount, token, lbLoading, lbError
 }) {
+  const [openCell, setOpenCell] = useState(null)
+  const toggleCell = (k) => setOpenCell(prev => prev === k ? null : k)
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 200, overflowY: "auto" }}>
       <div style={{ background: "#1B2A6B", border: `4px solid ${verdict.color}`, borderRadius: 16, padding: "28px 20px", maxWidth: 560, width: "100%", textAlign: "center", boxShadow: "6px 6px 0px rgba(0,0,0,0.5)", margin: "auto" }}>
@@ -67,14 +71,37 @@ export default function ResultsScreen({
                 if (isCorrect)       { bg = "#145a2e"; bd = "#22c55e" }
                 else if (showReveal) { bg = "#2a1a00"; bd = "#FFD700" }
                 else if (isWrong)    { bg = "#5a0a0a"; bd = "#dc2626" }
+                const isOpen = openCell === k
+                const topName = showReveal ? revealList[0] : null
+                const restCount = showReveal ? revealList.length - 1 : 0
                 return (
-                  <div key={ci} style={{ background: bg, border: `2px solid ${bd}`, borderRadius: 6, minHeight: 54, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 4, textAlign: "center", transition: "all 0.25s" }}>
-                    {showReveal && revealList.map((name, idx) => (
-                      <div key={idx} style={{ fontSize: 8, fontWeight: idx === 0 && isCorrect ? 700 : 600, color: idx === 0 && isCorrect ? "#4ade80" : "#FFD700", lineHeight: 1.5, fontFamily: "'Arial', sans-serif", width: "100%" }}>{name}</div>
-                    ))}
-                    {!showReveal && isWrong && <div style={{ fontSize: 9, color: "#f87171", fontWeight: 700, fontFamily: "'Arial', sans-serif" }}>X</div>}
-                    {!showReveal && !isWrong && (
-                      <div style={{ fontSize: 9, color: isEmpty ? "#333" : "#4a6aaf", fontWeight: 700, fontFamily: "'Arial', sans-serif" }}>{isEmpty ? "N/A" : "—"}</div>
+                  <div key={ci} style={{ position: "relative" }}>
+                    <div
+                      onClick={showReveal ? () => toggleCell(k) : undefined}
+                      style={{ background: bg, border: `2px solid ${bd}`, borderRadius: 6, minHeight: 54, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 4, textAlign: "center", transition: "all 0.25s", cursor: showReveal ? "pointer" : "default" }}
+                    >
+                      {showReveal && (
+                        <div style={{ width: "100%" }}>
+                          <div style={{ fontSize: 8, fontWeight: 700, color: isCorrect ? "#4ade80" : "#FFD700", lineHeight: 1.3, fontFamily: "'Arial', sans-serif" }}>{topName}</div>
+                          {restCount > 0 && (
+                            <div style={{ fontSize: 7, color: "rgba(255,215,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", gap: 2, marginTop: 2, fontFamily: "'Arial', sans-serif" }}>
+                              <span style={{ display: "inline-block", transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+                              {restCount} more
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {!showReveal && isWrong && <div style={{ fontSize: 9, color: "#f87171", fontWeight: 700, fontFamily: "'Arial', sans-serif" }}>X</div>}
+                      {!showReveal && !isWrong && (
+                        <div style={{ fontSize: 9, color: isEmpty ? "#333" : "#4a6aaf", fontWeight: 700, fontFamily: "'Arial', sans-serif" }}>{isEmpty ? "N/A" : "—"}</div>
+                      )}
+                    </div>
+                    {showReveal && isOpen && (
+                      <div style={{ position: "absolute", top: "calc(100% + 3px)", left: 0, right: 0, background: "#1a2540", border: "1px solid #FFD700", borderRadius: 5, zIndex: 100, padding: "5px 4px", maxHeight: 180, overflowY: "auto", boxShadow: "0 4px 12px rgba(0,0,0,0.6)" }}>
+                        {revealList.map((name, idx) => (
+                          <div key={idx} style={{ fontSize: 8, padding: "2px 4px", borderRadius: 3, lineHeight: 1.5, textAlign: "left", color: idx === 0 && isCorrect ? "#4ade80" : "#FFD700", fontWeight: idx === 0 && isCorrect ? 700 : 500, borderBottom: idx === 0 && isCorrect && revealList.length > 1 ? "1px solid rgba(255,255,255,0.1)" : "none", marginBottom: idx === 0 && isCorrect && revealList.length > 1 ? 2 : 0, paddingBottom: idx === 0 && isCorrect && revealList.length > 1 ? 4 : 2, fontFamily: "'Arial', sans-serif" }}>{name}</div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )
