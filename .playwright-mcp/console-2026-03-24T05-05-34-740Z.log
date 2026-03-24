@@ -1,0 +1,8 @@
+[    2915ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/favicon.ico:0
+[  149018ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/Mostly-Ball-s-V1/:0
+[  150024ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/Mostly-Ball-s-V1/:0
+[  151034ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/Mostly-Ball-s-V1/:0
+[  152065ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/Mostly-Ball-s-V1/:0
+[  153074ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/Mostly-Ball-s-V1/:0
+[  154079ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/Mostly-Ball-s-V1/:0
+[  155088ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/Mostly-Ball-s-V1/:0

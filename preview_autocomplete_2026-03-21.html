@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autocomplete Playground — Do You Know Ball?</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111; color: #eee; font-family: Arial, sans-serif; min-height: 100vh; }
+
+  /* ── LAYOUT ── */
+  .shell { display: flex; gap: 0; min-height: 100vh; }
+  .controls-panel { width: 300px; min-width: 300px; background: #1a1a1a; border-right: 1px solid #333; padding: 20px; overflow-y: auto; }
+  .preview-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 32px 24px; background: #181818; }
+
+  /* ── CONTROLS ── */
+  .controls-panel h2 { font-size: 13px; letter-spacing: 3px; color: #FFD700; text-transform: uppercase; margin-bottom: 20px; }
+  .ctrl-group { margin-bottom: 22px; }
+  .ctrl-group label { display: block; font-size: 11px; letter-spacing: 1.5px; color: #aaa; text-transform: uppercase; margin-bottom: 8px; }
+  .ctrl-group input[type=range] { width: 100%; accent-color: #FFD700; }
+  .ctrl-value { font-size: 13px; color: #FFD700; font-weight: 700; display: inline-block; margin-left: 8px; }
+  .ctrl-group select { width: 100%; background: #222; border: 1px solid #444; color: #eee; padding: 7px 10px; border-radius: 6px; font-size: 12px; }
+
+  .preset-row { display: flex; flex-direction: column; gap: 7px; margin-bottom: 22px; }
+  .preset-row label { font-size: 11px; letter-spacing: 1.5px; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
+  .preset-btn { background: #222; border: 1px solid #444; color: #ccc; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; text-align: left; transition: all 0.15s; }
+  .preset-btn:hover { border-color: #FFD700; color: #FFD700; }
+  .preset-btn.active { border-color: #FFD700; background: #2a2500; color: #FFD700; }
+
+  .divider { border: none; border-top: 1px solid #333; margin: 18px 0; }
+
+  /* ── PROMPT OUTPUT ── */
+  .prompt-box { background: #0d0d0d; border: 1px solid #333; border-radius: 8px; padding: 14px; margin-top: 18px; }
+  .prompt-box label { font-size: 10px; letter-spacing: 2px; color: #666; text-transform: uppercase; display: block; margin-bottom: 8px; }
+  .prompt-text { font-size: 11px; color: #bbb; line-height: 1.6; min-height: 60px; }
+  .copy-btn { margin-top: 10px; width: 100%; padding: 8px; background: #222; border: 1px solid #555; color: #aaa; border-radius: 6px; cursor: pointer; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; transition: all 0.15s; }
+  .copy-btn:hover { border-color: #FFD700; color: #FFD700; }
+  .copy-btn.copied { border-color: #22c55e; color: #22c55e; }
+
+  /* ── PREVIEW LABEL ── */
+  .preview-label { font-size: 11px; letter-spacing: 3px; color: #555; text-transform: uppercase; margin-bottom: 24px; }
+
+  /* ── GAME MODAL MOCK ── */
+  .modal-backdrop { background: rgba(0,0,0,0.85); border-radius: 16px; padding: 40px 32px; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 500px; }
+  .modal-box { background: #1B2A6B; border: 4px solid #FFD700; border-radius: 14px; padding: 28px 24px; width: 100%; max-width: 420px; box-shadow: 6px 6px 0px rgba(0,0,0,0.5); }
+  .modal-eyebrow { font-size: 10px; color: rgba(255,215,0,0.7); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+  .modal-title { font-weight: 900; font-size: 20px; line-height: 1.4; text-transform: uppercase; text-align: center; margin-bottom: 6px; }
+  .modal-desc { font-size: 11px; color: rgba(255,255,255,0.45); text-align: center; margin-bottom: 20px; }
+
+  /* ── AUTOCOMPLETE INPUT WRAPPER ── */
+  .ac-wrapper { position: relative; width: 100%; }
+  .ac-input { width: 100%; background: #0d1833; color: #fff; border: 3px solid #4a6aaf; border-radius: 8px; padding: 13px 16px; font-size: 15px; outline: none; font-family: Arial, sans-serif; transition: border-color 0.15s; }
+  .ac-input:focus { border-color: #FFD700; }
+  .ac-input.has-dropdown { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+
+  /* ── DROPDOWN ── */
+  .ac-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #0d1833; border: 3px solid #FFD700; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; max-height: 220px; overflow-y: auto; z-index: 999; box-shadow: 4px 6px 0px rgba(0,0,0,0.5); display: none; }
+  .ac-dropdown.open { display: block; }
+  .ac-item { padding: 10px 16px; font-size: 13px; color: #ccc; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.1s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.selected { background: rgba(255,215,0,0.12); color: #fff; }
+  .ac-item .match { color: #FFD700; font-weight: 700; }
+  .ac-item .ball-icon { font-size: 11px; opacity: 0.5; }
+  .ac-empty { padding: 12px 16px; font-size: 12px; color: rgba(255,255,255,0.3); font-style: italic; }
+
+  /* ── COUNT BADGE ── */
+  .ac-count { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 10px; color: rgba(255,215,0,0.5); pointer-events: none; letter-spacing: 1px; }
+
+  /* ── MODAL BUTTONS ── */
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-cancel { flex: 1; padding: 13px 0; border-radius: 8px; background: #0d1833; border: 2px solid #4a6aaf; color: #aaa; font-weight: 700; cursor: pointer; font-size: 13px; }
+  .btn-submit { flex: 2; padding: 13px 0; border-radius: 8px; background: #CC1122; border: 2px solid #FFD700; color: #fff; font-weight: 900; cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 3px 3px 0 rgba(0,0,0,0.3); }
+  .modal-hint { text-align: center; margin-top: 10px; font-size: 10px; color: rgba(255,255,255,0.3); }
+
+  /* scrollbar */
+  .ac-dropdown::-webkit-scrollbar { width: 5px; }
+  .ac-dropdown::-webkit-scrollbar-track { background: #0d1833; }
+  .ac-dropdown::-webkit-scrollbar-thumb { background: #FFD700; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── CONTROLS ── -->
+  <div class="controls-panel">
+    <h2>Autocomplete Controls</h2>
+
+    <div class="ctrl-group">
+      <label>Min characters to trigger <span class="ctrl-value" id="val-minchars">2</span></label>
+      <input type="range" id="ctrl-minchars" min="1" max="4" value="2">
+    </div>
+
+    <div class="ctrl-group">
+      <label>Max suggestions shown <span class="ctrl-value" id="val-maxsugg">6</span></label>
+      <input type="range" id="ctrl-maxsugg" min="3" max="12" value="6">
+    </div>
+
+    <div class="ctrl-group">
+      <label>Match style</label>
+      <select id="ctrl-matchstyle">
+        <option value="startswith">Starts with typed text</option>
+        <option value="contains" selected>Contains typed text (anywhere)</option>
+        <option value="fuzzy">Fuzzy (tolerates typos)</option>
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Highlight match</label>
+      <select id="ctrl-highlight">
+        <option value="yes" selected>Yes — bold gold highlight</option>
+        <option value="no">No — plain text</option>
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Show ball icon in items</label>
+      <select id="ctrl-ballicon">
+        <option value="yes" selected>Yes 🏀</option>
+        <option value="no">No</option>
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Show "no results" message</label>
+      <select id="ctrl-noresults">
+        <option value="yes" selected>Yes</option>
+        <option value="no">No (just close dropdown)</option>
+      </select>
+    </div>
+
+    <hr class="divider">
+
+    <div class="preset-row">
+      <label>Presets</label>
+      <button class="preset-btn" onclick="applyPreset('immaculate')">🏀 Immaculate Grid style</button>
+      <button class="preset-btn" onclick="applyPreset('minimal')">Minimal (starts with, no icons)</button>
+      <button class="preset-btn" onclick="applyPreset('generous')">Generous (fuzzy, 10 results)</button>
+      <button class="preset-btn" onclick="applyPreset('tight')">Tight (3 results, 3 chars)</button>
+      <button class="preset-btn" onclick="applyPreset('instant')">Instant (1 char trigger)</button>
+    </div>
+
+    <hr class="divider">
+
+    <div class="prompt-box">
+      <label>Current Settings Summary</label>
+      <div class="prompt-text" id="prompt-output">Adjust controls to generate a description.</div>
+      <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy Settings</button>
+    </div>
+  </div>
+
+  <!-- ── PREVIEW ── -->
+  <div class="preview-panel">
+    <div class="preview-label">Live Preview — Input Modal</div>
+
+    <div class="modal-backdrop">
+      <div class="modal-box">
+        <div class="modal-eyebrow">You need a...</div>
+        <div class="modal-title">
+          <span style="color:#60a5fa">Duke</span>
+          <span style="color:rgba(255,255,255,0.4);margin:0 8px">×</span>
+          <span style="color:#FFD700">Ball Hog</span>
+        </div>
+        <div class="modal-desc">Led the team in scoring for the full season</div>
+
+        <div class="ac-wrapper" id="ac-wrapper">
+          <input class="ac-input" id="ac-input" type="text" placeholder="Type a player's name..." autocomplete="off" spellcheck="false">
+          <span class="ac-count" id="ac-count" style="display:none"></span>
+          <div class="ac-dropdown" id="ac-dropdown"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel">Cancel</button>
+          <button class="btn-submit">SUBMIT 🏀</button>
+        </div>
+        <div class="modal-hint">Enter to submit • Escape to cancel • ↑↓ to navigate</div>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div style="margin-top:28px;max-width:420px;width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:16px 20px;">
+      <div style="font-size:10px;letter-spacing:2px;color:#555;text-transform:uppercase;margin-bottom:10px">How to test</div>
+      <div style="font-size:12px;color:#888;line-height:1.8;">
+        Try typing: <span style="color:#FFD700">la</span> (Laettner) · <span style="color:#FFD700">jo</span> (Jordan, Jones…) · <span style="color:#FFD700">ty</span> (Tyus, Tyler…) · <span style="color:#FFD700">sha</span> (Battier, Napier…)<br>
+        Adjust controls on the left, then copy the settings prompt and paste it back to confirm.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── MASTER PLAYER LIST (all unique names from ANSWER_POOL) ──
+const ALL_PLAYERS = [...new Set([
+  "Christian Laettner","J.J. Redick","Jay Williams","Shane Battier","Nolan Smith","Tyus Jones",
+  "Paolo Banchero","Grayson Allen","Zion Williamson","Johnny Dawkins","Danny Ferry","Jahlil Okafor",
+  "Kemba Walker","Rip Hamilton","Ben Gordon","Shabazz Napier","Ray Allen","Emeka Okafor",
+  "Tristen Newton","Jordan Hawkins",
+  "Jalen Brunson","Scottie Reynolds","Allan Ray","Randy Foye","Collin Gillespie",
+  "Ryan Arcidiacono","Kris Jenkins","Donte DiVincenzo","Ed Pinckney","Dwayne McClain",
+  "James Worthy","Donald Williams","Sean May","Tyler Hansbrough","Joel Berry II",
+  "Wayne Ellington","Marvin Williams","Caleb Love",
+  "Khalid El-Amin",
+  "Charlie Scott","Michael Jordan","Luke Maye",
+  "Grant Hill","Jay Bilas","Dick Vitale","Seth Davis","Jim Spanarkel",
+  "Donny Marshall","Rebecca Lobo","Gino Auriemma","Tate George","Donyell Marshall",
+  "Jay Wright",
+  "Antawn Jamison","Brad Daugherty","Eric Montross","Hubert Davis","Justin Jackson",
+  "Kenny Smith","Marcus Ginyard","Pete Chilcutt","Phil Ford","Rasheed Wallace",
+  "Rick Fox","Theo Pinson","Tyler Zeller","Vince Carter","Billy Cunningham",
+  "Clay Buckley","Ron Burt","Ryan Caldbeck","Quinn Cook","Jordan Davidson",
+  "Brian Davis","Nate James","Sean Kelly","Greg Koubek","J.D. Simpson",
+  "Jon Scheyer","Lance Thomas","Brian Zoubek",
+  "Antric Klaiber","Andrew Hurley","Charles Okwandu","Donnell Beverly","E.J. Harrison",
+  "Joey Calcaterra","Justin Evanovich","Kyle Bailey","Lasan Kromah","Nahiem Alleyne",
+  "Niels Giffey","Rashamel Jones","Ricky Moore","Ryan Swaller","Shamon Tooles",
+  "Taliek Brown","Tyler Olander",
+  "Gary McLain","Brian Harrington","Daniel Ochefu","Patrick Farrell","Kevin Rafferty",
+  "Henry Lowe","Denny Grace","Matt Kennedy","Tom Leibig","Eric Paschall",
+  "Lennie Rosenbluth","Tony Radovich","Bob Young","Jimmy Black","Chris Brust",
+  "Jeb Barlow","George Lynch","Henrik Rodl","Matt Wenstrom","Scott Cherry",
+  "Travis Stephenson","Jawad Williams","Jackie Manuel","Melvin Scott","C.J. Hooker",
+  "Danny Green","Bobby Frasor","J.B. Tanner","Patrick Moody","Mike Copeland",
+  "Jack Wooten","Kennedy Meeks","Isaiah Hicks","Nate Britt","Stilman White","Kanler Coker"
+])].sort((a,b) => a.localeCompare(b));
+
+// ── STATE ──
+let selectedIdx = -1;
+let currentSuggestions = [];
+
+// ── SETTINGS GETTERS ──
+const getMinChars  = () => parseInt(document.getElementById('ctrl-minchars').value);
+const getMaxSugg   = () => parseInt(document.getElementById('ctrl-maxsugg').value);
+const getMatchStyle= () => document.getElementById('ctrl-matchstyle').value;
+const getHighlight = () => document.getElementById('ctrl-highlight').value === 'yes';
+const getBallIcon  = () => document.getElementById('ctrl-ballicon').value === 'yes';
+const getNoResults = () => document.getElementById('ctrl-noresults').value === 'yes';
+
+// ── FUZZY MATCH ──
+function fuzzyMatch(text, query) {
+  const t = text.toLowerCase(), q = query.toLowerCase();
+  let ti = 0, qi = 0;
+  while (ti < t.length && qi < q.length) {
+    if (t[ti] === q[qi]) qi++;
+    ti++;
+  }
+  return qi === q.length;
+}
+
+// ── FILTER PLAYERS ──
+function getMatches(query) {
+  const q = query.toLowerCase().trim();
+  const style = getMatchStyle();
+  let results;
+  if (style === 'startswith') {
+    results = ALL_PLAYERS.filter(p => p.toLowerCase().startsWith(q));
+  } else if (style === 'contains') {
+    results = ALL_PLAYERS.filter(p => p.toLowerCase().includes(q));
+  } else {
+    results = ALL_PLAYERS.filter(p => fuzzyMatch(p, q));
+  }
+  return results.slice(0, getMaxSugg());
+}
+
+// ── HIGHLIGHT MATCH TEXT ──
+function highlightText(name, query) {
+  if (!getHighlight()) return escHtml(name);
+  const style = getMatchStyle();
+  const q = query.toLowerCase();
+  if (style === 'startswith' || style === 'contains') {
+    const idx = name.toLowerCase().indexOf(q);
+    if (idx === -1) return escHtml(name);
+    return escHtml(name.slice(0, idx)) +
+      `<span class="match">${escHtml(name.slice(idx, idx + q.length))}</span>` +
+      escHtml(name.slice(idx + q.length));
+  }
+  // fuzzy: highlight each matched char
+  let out = '', ti = 0;
+  const chars = [...name];
+  const qChars = [...q];
+  let qi = 0;
+  for (let i = 0; i < chars.length; i++) {
+    if (qi < qChars.length && chars[i].toLowerCase() === qChars[qi]) {
+      out += `<span class="match">${escHtml(chars[i])}</span>`;
+      qi++;
+    } else {
+      out += escHtml(chars[i]);
+    }
+  }
+  return out;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── RENDER DROPDOWN ──
+function renderDropdown(query) {
+  const dropdown = document.getElementById('ac-dropdown');
+  const input    = document.getElementById('ac-input');
+  const countEl  = document.getElementById('ac-count');
+
+  if (!query || query.trim().length < getMinChars()) {
+    dropdown.classList.remove('open');
+    input.classList.remove('has-dropdown');
+    countEl.style.display = 'none';
+    currentSuggestions = [];
+    selectedIdx = -1;
+    return;
+  }
+
+  currentSuggestions = getMatches(query);
+  selectedIdx = -1;
+
+  if (currentSuggestions.length === 0) {
+    if (getNoResults()) {
+      dropdown.innerHTML = `<div class="ac-empty">No players found matching "${escHtml(query)}"</div>`;
+      dropdown.classList.add('open');
+      input.classList.add('has-dropdown');
+    } else {
+      dropdown.classList.remove('open');
+      input.classList.remove('has-dropdown');
+    }
+    countEl.style.display = 'none';
+    return;
+  }
+
+  const iconHtml = getBallIcon() ? `<span class="ball-icon">🏀</span>` : '';
+  dropdown.innerHTML = currentSuggestions.map((name, i) =>
+    `<div class="ac-item" data-idx="${i}" onmousedown="selectItem(${i})">${iconHtml}<span>${highlightText(name, query)}</span></div>`
+  ).join('');
+  dropdown.classList.add('open');
+  input.classList.add('has-dropdown');
+
+  // count badge
+  const total = ALL_PLAYERS.filter(p => {
+    const q = query.toLowerCase().trim();
+    const style = getMatchStyle();
+    if (style === 'startswith') return p.toLowerCase().startsWith(q);
+    if (style === 'contains') return p.toLowerCase().includes(q);
+    return fuzzyMatch(p, q);
+  }).length;
+  if (total > getMaxSugg()) {
+    countEl.textContent = `${getMaxSugg()} of ${total}`;
+    countEl.style.display = 'block';
+  } else {
+    countEl.style.display = 'none';
+  }
+}
+
+// ── SELECT ITEM ──
+function selectItem(idx) {
+  const input = document.getElementById('ac-input');
+  input.value = currentSuggestions[idx];
+  closeDropdown();
+}
+
+function closeDropdown() {
+  const dropdown = document.getElementById('ac-dropdown');
+  const input    = document.getElementById('ac-input');
+  dropdown.classList.remove('open');
+  input.classList.remove('has-dropdown');
+  currentSuggestions = [];
+  selectedIdx = -1;
+  document.getElementById('ac-count').style.display = 'none';
+}
+
+// ── KEYBOARD NAV ──
+document.getElementById('ac-input').addEventListener('keydown', function(e) {
+  const items = document.querySelectorAll('.ac-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    selectedIdx = Math.min(selectedIdx + 1, items.length - 1);
+    updateSelected(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    selectedIdx = Math.max(selectedIdx - 1, -1);
+    updateSelected(items);
+  } else if (e.key === 'Enter') {
+    if (selectedIdx >= 0 && currentSuggestions[selectedIdx]) {
+      e.preventDefault();
+      selectItem(selectedIdx);
+    }
+  } else if (e.key === 'Escape') {
+    closeDropdown();
+  }
+});
+
+function updateSelected(items) {
+  items.forEach((el, i) => {
+    el.classList.toggle('selected', i === selectedIdx);
+  });
+  if (selectedIdx >= 0 && items[selectedIdx]) {
+    items[selectedIdx].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+document.getElementById('ac-input').addEventListener('input', function() {
+  renderDropdown(this.value);
+  updatePrompt();
+});
+
+document.getElementById('ac-input').addEventListener('blur', function() {
+  setTimeout(closeDropdown, 150);
+});
+
+// ── CONTROLS → RE-RENDER ──
+document.querySelectorAll('input[type=range], select').forEach(el => {
+  el.addEventListener('input', () => {
+    const input = document.getElementById('ac-input');
+    if (el.id === 'ctrl-minchars') document.getElementById('val-minchars').textContent = el.value;
+    if (el.id === 'ctrl-maxsugg')  document.getElementById('val-maxsugg').textContent  = el.value;
+    renderDropdown(input.value);
+    updatePrompt();
+  });
+});
+
+// ── PRESETS ──
+function applyPreset(name) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const presets = {
+    immaculate: { minchars:2, maxsugg:6, matchstyle:'contains', highlight:'yes', ballicon:'yes', noresults:'yes' },
+    minimal:    { minchars:2, maxsugg:5, matchstyle:'startswith', highlight:'no', ballicon:'no', noresults:'no' },
+    generous:   { minchars:1, maxsugg:10, matchstyle:'fuzzy', highlight:'yes', ballicon:'yes', noresults:'yes' },
+    tight:      { minchars:3, maxsugg:3, matchstyle:'contains', highlight:'yes', ballicon:'no', noresults:'yes' },
+    instant:    { minchars:1, maxsugg:6, matchstyle:'contains', highlight:'yes', ballicon:'yes', noresults:'yes' },
+  };
+  const p = presets[name];
+  document.getElementById('ctrl-minchars').value = p.minchars; document.getElementById('val-minchars').textContent = p.minchars;
+  document.getElementById('ctrl-maxsugg').value  = p.maxsugg;  document.getElementById('val-maxsugg').textContent  = p.maxsugg;
+  document.getElementById('ctrl-matchstyle').value = p.matchstyle;
+  document.getElementById('ctrl-highlight').value  = p.highlight;
+  document.getElementById('ctrl-ballicon').value   = p.ballicon;
+  document.getElementById('ctrl-noresults').value  = p.noresults;
+  const input = document.getElementById('ac-input');
+  renderDropdown(input.value);
+  updatePrompt();
+}
+
+// ── PROMPT OUTPUT ──
+function updatePrompt() {
+  const styleLabels = { startswith:'starts with', contains:'contains', fuzzy:'fuzzy-matches' };
+  const text = [
+    `Trigger: ${getMinChars()} character${getMinChars()>1?'s':''} minimum`,
+    `Max suggestions: ${getMaxSugg()}`,
+    `Match: ${styleLabels[getMatchStyle()]} typed text`,
+    `Highlight: ${getHighlight() ? 'bold gold' : 'none'}`,
+    `Ball icon: ${getBallIcon() ? 'yes' : 'no'}`,
+    `No results: ${getNoResults() ? 'show message' : 'hide dropdown'}`,
+  ].join(' · ');
+  document.getElementById('prompt-output').textContent = text;
+}
+
+function copyPrompt() {
+  const text = document.getElementById('prompt-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Settings'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// init
+updatePrompt();
+</script>
+</body>
+</html>

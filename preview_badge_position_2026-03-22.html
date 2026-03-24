@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WEEK Badge Position Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111; font-family: Arial, sans-serif; padding: 16px; }
+  h1 { color: #fff; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; opacity: 0.6; }
+
+  .controls {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .control-row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+  .control-group { display: flex; flex-direction: column; gap: 5px; }
+  label { color: #aaa; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  input[type=range] { width: 180px; accent-color: #FFD700; }
+  .val { color: #FFD700; font-size: 13px; font-weight: bold; }
+
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; }
+  .preset-btn {
+    background: #222; border: 1px solid #444; color: #ccc;
+    padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+  }
+  .preset-btn:hover, .preset-btn.active { background: #FFD700; color: #000; border-color: #FFD700; font-weight: bold; }
+
+  .phone-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
+  .phone-frame {
+    width: 390px;
+    border: 3px solid #444;
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    background: #000;
+    padding: 12px 6px 6px;
+  }
+  .phone-label { text-align: center; color: #555; font-size: 11px; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; }
+
+  .header-mock {
+    background: #1B2A6B;
+    border-bottom: 6px solid #FFD700;
+    padding: 20px 16px 18px;
+    text-align: center;
+    background-image:
+      radial-gradient(ellipse 55% 90% at 50% 50%,
+        rgba(27,42,107,0.97) 0%, rgba(27,42,107,0.92) 35%,
+        rgba(27,42,107,0.55) 60%, rgba(27,42,107,0.15) 80%,
+        rgba(27,42,107,0.0) 100%),
+      linear-gradient(135deg, #1a1a3e 0%, #2a3a7b 50%, #1a1a3e 100%);
+    background-size: cover;
+    background-position: center;
+    overflow: visible;
+    position: relative;
+  }
+
+  #weekBadge {
+    display: inline-block;
+    background: #F5F0E0;
+    color: #1B2A6B;
+    font-weight: 1000;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border-radius: 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transform: rotate(-1deg);
+    position: relative;
+    z-index: 2;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  .title-block { position: relative; z-index: 1; margin-bottom: 4px; }
+  .title-mostly {
+    font-size: clamp(42px,10.8vw,60px);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    color: #fff;
+    text-shadow: 4px 4px 0px #CC1122, 6px 6px 0px rgba(0,0,0,0.3);
+  }
+  .title-grid {
+    font-size: clamp(42px,10.8vw,60px);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    color: #FFD700;
+    text-shadow: 4px 4px 0px #CC1122, 6px 6px 0px rgba(0,0,0,0.4);
+  }
+
+  /* guide overlays */
+  #guideHE, #guideGR {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.5;
+  }
+  #guideHE { background: rgba(255,100,100,0.8); }
+  #guideGR { background: rgba(100,255,100,0.8); }
+
+  .blue-badge {
+    display: inline-block; background: #CC1122; color: #fff;
+    font-size: clamp(11px,2.8vw,16px); font-weight: 900; letter-spacing: 3px;
+    text-transform: uppercase; padding: 5px 20px; border-radius: 3px;
+    margin-top: 10px; margin-bottom: 14px; border: 2px solid #FFD700;
+    text-shadow: -1px -1px 0 #1B2A6B, 1px -1px 0 #1B2A6B, -1px 1px 0 #1B2A6B, 1px 1px 0 #1B2A6B;
+    box-shadow: 3px 3px 0px rgba(0,0,0,0.3);
+  }
+  .subtitle { font-size: 10px; color: rgba(255,255,255,0.5); letter-spacing: 2px; margin-bottom: 14px; }
+
+  .prompt-box { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 14px; }
+  .prompt-label { color: #aaa; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .prompt-text { color: #FFD700; font-size: 12px; line-height: 1.6; font-family: monospace; }
+  .copy-btn { margin-top: 10px; background: #FFD700; color: #000; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+  .copy-btn:hover { background: #ffe44d; }
+
+  .guide-legend { display: flex; gap: 16px; margin-top: 6px; font-size: 11px; color: #888; justify-content: center; }
+  .guide-legend span { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<h1>WEEK Badge — Width & Overlap Preview</h1>
+
+<div class="controls">
+  <div class="control-row">
+    <div class="control-group">
+      <label>Horizontal Padding — <span class="val" id="padVal">18px</span> each side</label>
+      <input type="range" id="padSlider" min="0" max="60" step="1" value="18">
+    </div>
+    <div class="control-group">
+      <label>Letter Spacing — <span class="val" id="lsVal">3px</span></label>
+      <input type="range" id="lsSlider" min="0" max="6" step="0.5" value="3">
+    </div>
+    <div class="control-group">
+      <label>Font Size — <span class="val" id="fsVal">11px</span></label>
+      <input type="range" id="fsSlider" min="7" max="14" step="1" value="11">
+    </div>
+  </div>
+  <div class="control-row">
+    <div class="control-group">
+      <label>Overlap / Drop — <span class="val" id="overlapVal">-8px</span> margin-bottom</label>
+      <input type="range" id="overlapSlider" min="-24" max="16" step="1" value="-8">
+    </div>
+    <div class="control-group">
+      <label>Presets</label>
+      <div class="presets">
+        <button class="preset-btn" onclick="setPreset(18,3,11,12,this)">Current</button>
+        <button class="preset-btn active" onclick="setPreset(6,1.5,9,-8,this)">Suggested</button>
+        <button class="preset-btn" onclick="setPreset(4,1,9,-10,this)">Tighter</button>
+        <button class="preset-btn" onclick="setPreset(10,2,10,-6,this)">Medium</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="guide-legend">
+  <span><div class="dot" style="background:rgba(255,100,100,0.8)"></div> H→E boundary (start target)</span>
+  <span><div class="dot" style="background:rgba(100,255,100,0.8)"></div> G–R midpoint (end target)</span>
+</div>
+
+<br>
+<div class="phone-label">390px — iPhone Mobile View</div>
+<div class="phone-wrap">
+  <div class="phone-frame">
+    <div class="header-mock" id="headerMock">
+      <!-- guide lines drawn by JS -->
+      <div id="guideHE"></div>
+      <div id="guideGR"></div>
+
+      <div id="weekBadge">WEEK 1: THIS IS MARCH</div>
+
+      <div class="title-block">
+        <div class="title-mostly" id="titleMostly">THE MOSTLY</div>
+        <div class="title-grid" id="titleGrid">IMMACULATE GRID</div>
+      </div>
+
+      <div class="blue-badge">BLUE BLOOD BALLERS</div>
+      <div class="subtitle">Sign-In &nbsp;•&nbsp; Sign-Up &nbsp;•&nbsp; View Leaderboards</div>
+    </div>
+  </div>
+</div>
+
+<div class="prompt-box">
+  <div class="prompt-label">Settings to implement</div>
+  <div class="prompt-text" id="promptText"></div>
+  <button class="copy-btn" onclick="copyPrompt()">Copy</button>
+</div>
+
+<script>
+  let pad = 18, ls = 3, fs = 11, overlap = -8;
+
+  function update() {
+    const badge = document.getElementById('weekBadge');
+    badge.style.padding = `4px ${pad}px`;
+    badge.style.letterSpacing = ls + 'px';
+    badge.style.fontSize = fs + 'px';
+    badge.style.marginBottom = overlap + 'px';
+
+    document.getElementById('padVal').textContent = pad + 'px';
+    document.getElementById('lsVal').textContent = ls + 'px';
+    document.getElementById('fsVal').textContent = fs + 'px';
+    document.getElementById('overlapVal').textContent = overlap + 'px';
+
+    requestAnimationFrame(drawGuides);
+  }
+
+  function drawGuides() {
+    const header = document.getElementById('headerMock');
+    const mostly = document.getElementById('titleMostly');
+    const grid = document.getElementById('titleGrid');
+    const badge = document.getElementById('weekBadge');
+    const hRect = header.getBoundingClientRect();
+    const mRect = mostly.getBoundingClientRect();
+    const gRect = grid.getBoundingClientRect();
+    const bRect = badge.getBoundingClientRect();
+
+    // H-E boundary: ~2/10 of the way through "THE MOSTLY"
+    const heX = mRect.left + (mRect.width * 0.22) - hRect.left;
+    // G-R midpoint: ~79% of the way through "IMMACULATE GRID"
+    const grX = gRect.left + (gRect.width * 0.79) - hRect.left;
+
+    const heEl = document.getElementById('guideHE');
+    const grEl = document.getElementById('guideGR');
+    heEl.style.left = heX + 'px';
+    grEl.style.left = grX + 'px';
+
+    const badgeW = Math.round(bRect.width);
+    document.getElementById('promptText').textContent =
+      `padding: "4px ${pad}px"\nletterSpacing: ${ls}\nfontSize: ${fs}\nmarginBottom: ${overlap}\nposition: "relative", zIndex: 2\n\nBadge width: ~${badgeW}px`;
+  }
+
+  document.getElementById('padSlider').addEventListener('input', function() {
+    pad = +this.value; clearActive(); update();
+  });
+  document.getElementById('lsSlider').addEventListener('input', function() {
+    ls = +this.value; clearActive(); update();
+  });
+  document.getElementById('fsSlider').addEventListener('input', function() {
+    fs = +this.value; clearActive(); update();
+  });
+  document.getElementById('overlapSlider').addEventListener('input', function() {
+    overlap = +this.value; clearActive(); update();
+  });
+
+  function setPreset(p, l, f, o, btn) {
+    pad = p; ls = l; fs = f; overlap = o;
+    document.getElementById('padSlider').value = p;
+    document.getElementById('lsSlider').value = l;
+    document.getElementById('fsSlider').value = f;
+    document.getElementById('overlapSlider').value = o;
+    clearActive(); btn.classList.add('active');
+    update();
+  }
+
+  function clearActive() {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  }
+
+  function copyPrompt() {
+    navigator.clipboard.writeText(document.getElementById('promptText').textContent);
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1500);
+  }
+
+  update();
+</script>
+</body>
+</html>

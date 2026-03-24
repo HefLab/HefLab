@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PREVIEW — Results Background v5 · 2026-03-21</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d0d0d;
+      font-family: 'Arial Black', 'Impact', 'Segoe UI Black', system-ui, sans-serif;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── LEFT PANEL ── */
+    .controls-panel {
+      width: 240px;
+      min-width: 240px;
+      background: #141414;
+      border-right: 2px solid #222;
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      overflow-y: auto;
+    }
+    .panel-title { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #444; font-family: Arial, sans-serif; padding-bottom: 10px; border-bottom: 1px solid #222; }
+    .section-title { font-size: 10px; color: #444; letter-spacing: 2px; text-transform: uppercase; font-family: Arial, sans-serif; margin-bottom: 6px; }
+    .control-label { font-size: 10px; color: #777; letter-spacing: 1.5px; text-transform: uppercase; font-family: Arial, sans-serif; margin-bottom: 4px; }
+    .control-value { font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+    input[type=range] { width: 100%; accent-color: #FFD700; cursor: pointer; }
+    .row-spread { display: flex; justify-content: space-between; font-size: 10px; color: #333; font-family: Arial, sans-serif; margin-top: 2px; }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .ctrl-btn {
+      padding: 7px 6px; border-radius: 5px; border: 2px solid #2a2a2a;
+      background: #1a1a1a; color: #666; font-size: 10px; font-weight: 700;
+      cursor: pointer; letter-spacing: 1px; text-transform: uppercase;
+      font-family: Arial, sans-serif; transition: all 0.12s; text-align: center;
+    }
+    .ctrl-btn:hover { border-color: #555; color: #aaa; }
+    .ctrl-btn.active { border-color: #FFD700; color: #FFD700; background: #1a1500; }
+    .slider-val { font-size: 18px; font-weight: 900; color: #aaa; }
+
+    /* ── RIGHT PANEL ── */
+    .preview-panel {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 24px 20px; gap: 20px; overflow-y: auto;
+    }
+    .preview-label { font-size: 10px; letter-spacing: 3px; color: #333; text-transform: uppercase; font-family: Arial, sans-serif; align-self: flex-start; }
+
+    /* ── MODAL CARD ── */
+    .modal-card {
+      border-radius: 14px;
+      padding: 26px 22px 22px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 8px 8px 0px rgba(0,0,0,0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* BG image — zoomed out, full scene visible, still fills card */
+    .modal-bg {
+      position: absolute;
+      inset: -8%;          /* expand slightly beyond card edges — no gaps */
+      background-image: url('Photo Ref Folder For UI Dev/results background.png');
+      background-size: cover;
+      background-position: center 35%;
+      /* Scale transform pulls back the zoom without leaving blank edges */
+      transform: scale(0.82);
+      transform-origin: center center;
+      z-index: 0;
+    }
+
+    /* Overlay: warm dark tint — not pure black, pulls from court palette */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(
+        to bottom,
+        rgba(10,5,0,0.62) 0%,
+        rgba(10,5,0,0.48) 35%,
+        rgba(10,5,0,0.58) 100%
+      );
+    }
+
+    .modal-content { position: relative; z-index: 2; }
+
+    /* Final Score label — larger, bolder */
+    .final-score-lbl {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      font-family: Arial, sans-serif;
+      margin-bottom: 6px;
+    }
+    .verdict-name {
+      font-size: 42px; font-weight: 900; text-transform: uppercase;
+      letter-spacing: -1px; text-shadow: 3px 3px 0 rgba(0,0,0,0.7);
+      line-height: 1; margin-bottom: 10px;
+    }
+    .pct-block {
+      display: inline-flex; flex-direction: column; align-items: center;
+      background: rgba(0,0,0,0.4); border-radius: 10px;
+      padding: 8px 28px; margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .pct-number { font-size: 42px; font-weight: 900; line-height: 1; text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+    .pct-label { font-size: 10px; color: rgba(255,255,255,0.45); letter-spacing: 2px; text-transform: uppercase; font-family: Arial, sans-serif; margin-top: 3px; }
+
+    /* Verdict sub — larger and bolder */
+    .verdict-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      font-family: Arial, sans-serif;
+      margin-bottom: 18px;
+      letter-spacing: 0.3px;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+    }
+
+    .score-cards { display: flex; justify-content: center; gap: 8px; margin-bottom: 18px; }
+    .score-card {
+      border-radius: 8px; padding: 9px 12px; min-width: 76px;
+      text-align: center; border: 2px solid;
+      background: rgba(0,0,0,0.45);
+    }
+    .score-card-val { font-size: 28px; font-weight: 900; line-height: 1; }
+    .score-card-lbl { font-size: 8px; font-weight: 700; letter-spacing: 1.5px; font-family: Arial, sans-serif; margin-top: 3px; text-transform: uppercase; }
+
+    .divider { width: 100%; height: 1px; background: rgba(255,255,255,0.12); margin-bottom: 14px; }
+
+    .reveal-btn {
+      width: 100%; padding: 11px 0; border-radius: 7px; margin-bottom: 10px;
+      background: rgba(0,0,0,0.5); border: 2px solid #FFD700;
+      color: #FFD700; font-weight: 900; cursor: pointer; font-size: 13px;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      font-family: 'Arial Black', sans-serif;
+    }
+    .revealed-text {
+      font-size: 10px; color: rgba(255,215,0,0.55);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 10px; font-family: Arial, sans-serif;
+    }
+
+    .action-row { display: flex; gap: 8px; width: 100%; }
+
+    .copy-btn {
+      flex: 1; padding: 12px 6px; border-radius: 7px;
+      font-weight: 900; cursor: pointer; font-size: 13px;
+      text-transform: uppercase; letter-spacing: 1px;
+      font-family: 'Arial Black', sans-serif; transition: all 0.12s;
+      background: rgba(0,0,0,0.5); border: 2px solid #FFD700; color: #FFD700;
+    }
+    .copy-btn:hover { background: rgba(255,215,0,0.12); }
+    .copy-btn.copied { background: rgba(34,197,94,0.2) !important; border-color: #22c55e !important; color: #4ade80 !important; }
+
+    .play-btn {
+      flex: 1; padding: 12px 6px; border-radius: 7px;
+      background: #16a34a; color: #fff; font-weight: 900;
+      cursor: pointer; font-size: 13px; text-transform: uppercase;
+      letter-spacing: 1px; font-family: 'Arial Black', sans-serif;
+      border: 2px solid #000; box-shadow: 3px 3px 0 rgba(0,0,0,0.6);
+    }
+
+    /* ── Message Preview ── */
+    .msg-section { max-width: 520px; width: 100%; }
+    .msg-title { font-size: 10px; color: #333; letter-spacing: 2px; text-transform: uppercase; font-family: Arial, sans-serif; margin-bottom: 8px; }
+    .msg-box {
+      background: #111; border: 1px solid #2a2a2a; border-radius: 8px;
+      padding: 14px 16px; font-family: Arial, sans-serif;
+      font-size: 15px; color: #ccc; line-height: 1.9; text-align: left;
+    }
+    .msg-url { color: #4a8cdf; font-size: 13px; }
+    .copy-box-btn {
+      margin-top: 10px; padding: 7px 16px; border-radius: 5px;
+      border: 1px solid #2a2a2a; background: #141414; color: #555;
+      font-size: 10px; font-weight: 700; cursor: pointer;
+      letter-spacing: 1.5px; text-transform: uppercase; font-family: Arial, sans-serif; transition: all 0.12s;
+    }
+    .copy-box-btn:hover { border-color: #FFD700; color: #FFD700; }
+    .copy-box-btn.copied { border-color: #22c55e; color: #4ade80; }
+    .toast { display: none; margin-top: 8px; font-size: 10px; color: #4ade80; font-family: Arial, sans-serif; letter-spacing: 2px; text-transform: uppercase; }
+    .toast.show { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ── CONTROLS ── -->
+<div class="controls-panel">
+  <div class="panel-title">Playground Controls</div>
+
+  <div>
+    <div class="control-label">Correct Answers</div>
+    <div class="control-value" id="correct-display">8</div>
+    <input type="range" id="correct-slider" min="0" max="16" value="8" />
+    <div class="row-spread"><span>0</span><span>16</span></div>
+  </div>
+
+  <div>
+    <div class="control-label" style="color:#333">Incorrect (auto)</div>
+    <div style="font-size:18px;font-weight:700;color:#444;" id="incorrect-display">8</div>
+  </div>
+
+  <div>
+    <div class="section-title">Score Presets</div>
+    <div class="btn-grid">
+      <button class="ctrl-btn" onclick="setPreset(16)">Perfect<br><span style="font-size:9px">16/16</span></button>
+      <button class="ctrl-btn" onclick="setPreset(13)">Elite<br><span style="font-size:9px">13/16</span></button>
+      <button class="ctrl-btn" onclick="setPreset(10)">Solid<br><span style="font-size:9px">10/16</span></button>
+      <button class="ctrl-btn" onclick="setPreset(8)">50/50<br><span style="font-size:9px">8/16</span></button>
+      <button class="ctrl-btn" onclick="setPreset(4)">Bench<br><span style="font-size:9px">4/16</span></button>
+      <button class="ctrl-btn" onclick="setPreset(0)">Zero<br><span style="font-size:9px">0/16</span></button>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-title">Answers Revealed?</div>
+    <div class="btn-grid">
+      <button class="ctrl-btn" id="rev-yes" onclick="setRevealed(true)">Yes</button>
+      <button class="ctrl-btn active" id="rev-no" onclick="setRevealed(false)">No</button>
+    </div>
+  </div>
+
+  <!-- Overlay darkness -->
+  <div>
+    <div class="section-title">Overlay Darkness</div>
+    <div class="slider-val" id="overlay-val">55%</div>
+    <input type="range" id="overlay-slider" min="25" max="85" value="55" />
+    <div class="row-spread"><span>Light</span><span>Dark</span></div>
+  </div>
+
+  <!-- Photo zoom -->
+  <div>
+    <div class="section-title">Photo Zoom Out</div>
+    <div class="slider-val" id="zoom-val">82%</div>
+    <input type="range" id="zoom-slider" min="60" max="100" value="82" />
+    <div class="row-spread"><span>More scene</span><span>Tighter</span></div>
+    <div style="font-size:9px;color:#333;font-family:Arial,sans-serif;margin-top:4px;">Lower = more of the court visible</div>
+  </div>
+
+  <!-- Vertical position -->
+  <div>
+    <div class="section-title">Vertical Focus</div>
+    <div class="slider-val" id="vpos-val">35%</div>
+    <input type="range" id="vpos-slider" min="0" max="100" value="35" />
+    <div class="row-spread"><span>Top (crowd)</span><span>Bottom (floor)</span></div>
+  </div>
+</div>
+
+<!-- ── PREVIEW ── -->
+<div class="preview-panel">
+  <div class="preview-label">Results Page — Photo Background v5</div>
+
+  <div class="modal-card" id="modal-card">
+    <div class="modal-bg" id="modal-bg"></div>
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="final-score-lbl">Final Score</div>
+      <div class="verdict-name" id="verdict-name">SOLID</div>
+
+      <div class="pct-block">
+        <div class="pct-number" id="pct-number">50%</div>
+        <div class="pct-label">Correct</div>
+      </div>
+
+      <div class="verdict-sub" id="verdict-sub">More than half right. Decent hoops IQ.</div>
+
+      <div class="score-cards">
+        <div class="score-card" style="border-color:#1a6b35;">
+          <div class="score-card-val" style="color:#4ade80" id="sc-correct">8</div>
+          <div class="score-card-lbl" style="color:#5a9a70">Correct</div>
+        </div>
+        <div class="score-card" style="border-color:#6b1a1a;">
+          <div class="score-card-val" style="color:#f87171" id="sc-incorrect">8</div>
+          <div class="score-card-lbl" style="color:#9a5a5a">Incorrect</div>
+        </div>
+        <div class="score-card" style="border-color:rgba(255,255,255,0.15);">
+          <div class="score-card-val" style="color:rgba(255,255,255,0.3)" id="sc-skipped">0</div>
+          <div class="score-card-lbl" style="color:rgba(255,255,255,0.2)">Skipped</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div id="reveal-area"></div>
+      <div class="action-row" id="action-row"></div>
+    </div>
+  </div>
+
+  <div class="msg-section">
+    <div class="msg-title">Text that gets copied</div>
+    <div class="msg-box" id="msg-box"></div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <button class="copy-box-btn" id="copy-box-btn" onclick="doCopy()">Copy to Clipboard</button>
+      <div class="toast" id="toast">Copied</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const GAME_URL = "https://lhefner4.github.io/Mostly-Ball-s-V1/";
+  const TOTAL = 16;
+  let correct = 8, revealed = false;
+  let overlayVal = 55, zoomVal = 82, vposVal = 35;
+
+  const verdicts = [
+    { min: 16, label: "IMMACULATE",   sub: "A perfect board. You absolutely know ball.", color: "#FFD700" },
+    { min: 12, label: "ELITE",         sub: "Near flawless. You know ball.",             color: "#4ade80" },
+    { min:  8, label: "SOLID",         sub: "More than half right. Decent hoops IQ.",    color: "#60a5fa" },
+    { min:  4, label: "BENCH WARMER",  sub: "You watched a game or two... maybe.",       color: "#fb923c" },
+    { min:  0, label: "RIDE THE PINE", sub: "Turn in your sneakers. Study up.",          color: "#f87171" },
+  ];
+
+  function getVerdict(n) { return verdicts.find(v => n >= v.min) || verdicts[verdicts.length-1]; }
+  function buildMessage(n) {
+    const pct = Math.round((n / TOTAL) * 100);
+    return `I shot ${n} / ${TOTAL} (${pct}% Correct)... Balls in your court now! \uD83C\uDFC0\n${GAME_URL} \uD83C\uDFC0`;
+  }
+
+  function updateBg() {
+    const bg = document.getElementById('modal-bg');
+    const inset = -(100 - zoomVal) / 2 + '%';
+    bg.style.inset = inset;
+    bg.style.backgroundPosition = `center ${vposVal}%`;
+
+    const o = overlayVal / 100;
+    const oTop = Math.min(o + 0.08, 1).toFixed(2);
+    const oMid = Math.max(o - 0.08, 0).toFixed(2);
+    document.getElementById('modal-overlay').style.background =
+      `linear-gradient(to bottom, rgba(10,5,0,${oTop}) 0%, rgba(10,5,0,${oMid}) 40%, rgba(10,5,0,${o}) 100%)`;
+  }
+
+  function renderAll() {
+    const incorrect = TOTAL - correct;
+    const pct = Math.round((correct / TOTAL) * 100);
+    const verdict = getVerdict(correct);
+
+    document.getElementById('correct-display').textContent = correct;
+    document.getElementById('incorrect-display').textContent = incorrect;
+    document.getElementById('verdict-name').textContent = verdict.label;
+    document.getElementById('verdict-name').style.color = verdict.color;
+    document.getElementById('pct-number').textContent = pct + '%';
+    document.getElementById('pct-number').style.color = verdict.color;
+    document.getElementById('verdict-sub').textContent = verdict.sub;
+    document.getElementById('modal-card').style.border = `4px solid ${verdict.color}`;
+    document.getElementById('sc-correct').textContent = correct;
+    document.getElementById('sc-incorrect').textContent = incorrect;
+
+    updateBg();
+
+    const ra = document.getElementById('reveal-area');
+    ra.innerHTML = revealed
+      ? `<div class="revealed-text">Correct answers revealed — no repeats</div>`
+      : `<button class="reveal-btn">Reveal Correct Answers</button>`;
+
+    document.getElementById('action-row').innerHTML = `
+      <button class="copy-btn" id="copy-modal-btn" onclick="handleModalCopy(this)">Copy Results</button>
+      <button class="play-btn">Play Again</button>
+    `;
+
+    const msg = buildMessage(correct);
+    const lines = msg.split('\n');
+    document.getElementById('msg-box').innerHTML =
+      `<span>${lines[0]}</span><br><span class="msg-url">${lines[1]}</span>`;
+  }
+
+  function handleModalCopy(btn) {
+    doCopy();
+    btn.classList.add('copied');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = orig; }, 2000);
+  }
+
+  function doCopy() {
+    const msg = buildMessage(correct);
+    if (navigator.clipboard) navigator.clipboard.writeText(msg).catch(() => fallbackCopy(msg));
+    else fallbackCopy(msg);
+    const btn = document.getElementById('copy-box-btn');
+    btn.classList.add('copied'); btn.textContent = 'Copied';
+    document.getElementById('toast').classList.add('show');
+    setTimeout(() => {
+      btn.classList.remove('copied'); btn.textContent = 'Copy to Clipboard';
+      document.getElementById('toast').classList.remove('show');
+    }, 2000);
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  }
+
+  function setPreset(n) { correct = n; renderAll(); }
+  function setRevealed(v) {
+    revealed = v;
+    document.getElementById('rev-yes').classList.toggle('active', v);
+    document.getElementById('rev-no').classList.toggle('active', !v);
+    renderAll();
+  }
+
+  document.getElementById('correct-slider').addEventListener('input', e => { correct = parseInt(e.target.value); renderAll(); });
+  document.getElementById('overlay-slider').addEventListener('input', e => {
+    overlayVal = parseInt(e.target.value);
+    document.getElementById('overlay-val').textContent = overlayVal + '%';
+    updateBg();
+  });
+  document.getElementById('zoom-slider').addEventListener('input', e => {
+    zoomVal = parseInt(e.target.value);
+    document.getElementById('zoom-val').textContent = zoomVal + '%';
+    updateBg();
+  });
+  document.getElementById('vpos-slider').addEventListener('input', e => {
+    vposVal = parseInt(e.target.value);
+    document.getElementById('vpos-val').textContent = vposVal + '%';
+    updateBg();
+  });
+
+  renderAll();
+</script>
+</body>
+</html>
