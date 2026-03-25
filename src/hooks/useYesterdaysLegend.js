@@ -39,7 +39,7 @@ export function useYesterdaysLegend(puzzles) {
       })
 
     return () => { cancelled = true }
-  }, [])
+  }, [puzzles])
 
   return { legend, loading, error }
 }
