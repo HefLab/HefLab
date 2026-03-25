@@ -7,6 +7,7 @@ import { validateNickname } from './utils/validate.js'
 import { submitScore } from './utils/supabase.js'
 import { usePlayerIdentity } from './hooks/usePlayerIdentity.js'
 import { useLeaderboard } from './hooks/useLeaderboard.js'
+import { useYesterdaysLegend } from './hooks/useYesterdaysLegend.js'
 import Header from './components/Header.jsx'
 import Grid from './components/Grid.jsx'
 import ResultsScreen from './components/ResultsScreen.jsx'
@@ -56,6 +57,7 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
   const { entries, totalCount, playerRank, loading: lbLoading, error: lbError } = useLeaderboard(today, token, refreshKey)
+  const { legend, loading: legendLoading, error: legendError } = useYesterdaysLegend(PUZZLES)
   const inputRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -223,8 +225,15 @@ export default function App() {
       />
       {showLeaderboard && (
         <LeaderboardPanel
-          entries={entries} totalCount={totalCount} loading={lbLoading} error={lbError}
-          token={token} onClose={() => setShowLeaderboard(false)}
+          entries={entries}
+          totalCount={totalCount}
+          loading={lbLoading}
+          error={lbError}
+          token={token}
+          onClose={() => setShowLeaderboard(false)}
+          legend={legend}
+          legendLoading={legendLoading}
+          legendError={legendError}
         />
       )}
       {showEndGame && (
