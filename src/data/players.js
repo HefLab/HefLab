@@ -1254,6 +1254,7 @@ const PLAYER_DB = [
   "Marcus Landry",
   "Marcus Paige",
   "Marcus Sasser",
+  "Marcus Smart",
   "Marcus Thompson",
   "Marcus Vinicius",
   "Mario Chalmers",
