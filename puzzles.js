@@ -77,7 +77,7 @@ const PUZZLES = {
   },
   "2026-03-26": {
     weekBadge: "WEEK 1: THIS IS MARCH",
-    gridLabel: "GRID #3: BALLERS FINAL MARCH",
+    gridLabel: "GRID #5: BALLERS FINAL MARCH",
     cornerPhrase: "Third Eye Ballin'.\nYou Already Know The Game.",
     columns: [
       { name: "UCLA",       nickname: "Bruins",       color: "#003B5C", border: "#2D68C4" },
