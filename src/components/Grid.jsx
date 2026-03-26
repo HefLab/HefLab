@@ -25,8 +25,8 @@ export default function Grid({
             {cornerPhrase && <div style={{ fontSize: 11, color: "#FFD700", fontStyle: "italic", fontWeight: 400, textAlign: "center", lineHeight: 1.5, fontFamily: "Georgia, serif", whiteSpace: "pre-line" }}>"{cornerPhrase}"</div>}
           </div>
           {columns.map((col, ci) => (
-            <div key={ci} style={{ background: "#1B2A6B", borderRadius: 8, padding: "10px 4px", textAlign: "center", minHeight: 58, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "3px solid #FFD700", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)" }}>
-              <div style={{ fontWeight: 900, fontSize: "clamp(11px,2.5vw,15px)", color: "#fff", textTransform: "uppercase", textShadow: "1px 1px 0 rgba(0,0,0,0.5)" }}>{col.name}</div>
+            <div key={ci} style={{ background: "#1B2A6B", borderRadius: 8, padding: "10px 4px", textAlign: "center", height: 58, boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "3px solid #FFD700", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)", overflow: "hidden" }}>
+              <div style={{ fontWeight: 900, fontSize: 12, color: "#fff", textTransform: "uppercase", textShadow: "1px 1px 0 rgba(0,0,0,0.5)", lineHeight: 1.2 }}>{col.name}</div>
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginTop: 2, fontFamily: "'Arial', sans-serif" }}>{col.nickname}</div>
             </div>
           ))}
