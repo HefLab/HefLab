@@ -20,14 +20,16 @@ export default function Grid({
     <>
       {/* GAME GRID */}
       <div style={{ maxWidth: 680, margin: "12px auto 0", padding: "0 8px" }}>
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div style={{ minWidth: 540 }}>
         <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 5, marginBottom: 5 }}>
           <div style={{ background: "#CC1122", border: "3px solid #FFD700", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)", padding: "6px" }}>
             {cornerPhrase && <div style={{ fontSize: 11, color: "#FFD700", fontStyle: "italic", fontWeight: 400, textAlign: "center", lineHeight: 1.5, fontFamily: "Georgia, serif", whiteSpace: "pre-line" }}>"{cornerPhrase}"</div>}
           </div>
           {columns.map((col, ci) => (
-            <div key={ci} style={{ background: "#1B2A6B", borderRadius: 8, padding: "10px 4px", textAlign: "center", height: 58, boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "3px solid #FFD700", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)", overflow: "hidden" }}>
-              <div style={{ fontWeight: 900, fontSize: 12, color: "#fff", textTransform: "uppercase", textShadow: "1px 1px 0 rgba(0,0,0,0.5)", lineHeight: 1.2 }}>{col.name}</div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginTop: 2, fontFamily: "'Arial', sans-serif" }}>{col.nickname}</div>
+            <div key={ci} style={{ background: "#1B2A6B", borderRadius: 8, padding: "10px 4px", textAlign: "center", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "3px solid #FFD700", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)", overflow: "hidden" }}>
+              <div style={{ fontWeight: 900, fontSize: 12, color: "#fff", textTransform: "uppercase", textShadow: "1px 1px 0 rgba(0,0,0,0.5)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{col.name}</div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginTop: 2, fontFamily: "'Arial', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{col.nickname}</div>
             </div>
           ))}
         </div>
@@ -65,6 +67,8 @@ export default function Grid({
             })}
           </div>
         ))}
+        </div>
+        </div>
       </div>
 
       {/* INPUT MODAL */}
