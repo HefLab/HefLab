@@ -191,7 +191,7 @@ export const PUZZLES = {
       { name: "NL West",    nickname: "", color: "#1a4a1a", border: "#3d8b3d" },
     ],
     rows: [
-      { name: "Offseason Trade",  desc: "Player was traded or acquired in the 2025–26 offseason and started Opening Day 2026" },
+      { name: "Welcome to the Ball Park", desc: "Player is starting their first game on a new team (traded or drafted)" },
       { name: "Get The Ball Rolling", desc: "Player bats 1st, 2nd or 3rd in their opening day lineup." },
       { name: "Big Balls", desc: "This player led their division in HR's last season." },
       { name: "STILL BALLIN",     desc: "Player has been with their team for 5 or more years in a row." },
