@@ -1,6 +1,6 @@
 export default function NicknamePopover({ nickname, show, input, setInput, error, onToggle, onSave }) {
   return (
-    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,212,0,0.12)', border: '1px solid rgba(255,212,0,0.35)', borderRadius: 20, padding: '4px 10px 4px 12px', cursor: 'default' }}>
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0d1a3a', border: '2px solid #FFD700', borderRadius: 3, padding: '5px 11px', cursor: 'default', boxShadow: '2px 2px 0 rgba(0,0,0,0.5)' }}>
       <span style={{ fontSize: 12, color: '#FFD700', fontFamily: "'Arial', sans-serif", fontWeight: 700, letterSpacing: 0.5 }}>
         {nickname}
       </span>
