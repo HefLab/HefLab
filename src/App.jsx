@@ -219,7 +219,7 @@ export default function App() {
       <div style={{ height: 8, background: "linear-gradient(to bottom, rgba(10,15,35,0.35), transparent)" }} />
       {/* Opening Day eligibility notice */}
       <div style={{ textAlign: "center", padding: "2px 10px 6px", fontSize: 9, color: "rgba(255,215,0,0.88)", letterSpacing: 0, fontFamily: "'Arial', sans-serif", fontStyle: "italic", fontWeight: 700, whiteSpace: "nowrap" }}>
-        *** All answers must appear in their team's Opening Day 2026 starting lineup ***
+        *** To qualify as a correct answer, player MUST be in the starting lineup for their team on Opening Day ***
       </div>
       <Grid
         columns={columns} rows={rows} answerPool={answerPool}
