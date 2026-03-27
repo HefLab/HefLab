@@ -6,7 +6,7 @@ export default function Grid({
   onSubmit, onCancel,
   revealMap, cornerPhrase
 }) {
-  const gridCols = "106px 1fr 1fr 1fr 1fr"
+  const gridCols = "88px 1fr 1fr 1fr 1fr"
 
   const activeInfo = active
     ? (() => { const [r, c] = active.split("-").map(Number); return { row: rows[r], col: columns[c] } })()
@@ -19,25 +19,24 @@ export default function Grid({
   return (
     <>
       {/* GAME GRID */}
-      <div style={{ maxWidth: 680, margin: "12px auto 0", padding: "0 8px" }}>
+      <div style={{ maxWidth: 480, margin: "4px auto 0", padding: "0 14px" }}>
         <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-        <div style={{ minWidth: 540 }}>
+        <div>
         <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 5, marginBottom: 5 }}>
-          <div style={{ background: "#CC1122", border: "3px solid #FFD700", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)", padding: "6px" }}>
-            {cornerPhrase && <div style={{ fontSize: 11, color: "#FFD700", fontStyle: "italic", fontWeight: 400, textAlign: "center", lineHeight: 1.5, fontFamily: "Georgia, serif", whiteSpace: "pre-line" }}>"{cornerPhrase}"</div>}
+          <div style={{ background: "rgba(180,10,25,0.75)", border: "2px solid #FFD700", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "2px 2px 0 rgba(0,0,0,0.5)", padding: "5px", backdropFilter: "blur(3px)" }}>
+            {cornerPhrase && <div style={{ fontSize: 8, color: "#FFD700", fontStyle: "italic", fontWeight: 400, textAlign: "center", lineHeight: 1.4, fontFamily: "Georgia, serif", whiteSpace: "pre-line" }}>"{cornerPhrase}"</div>}
           </div>
           {columns.map((col, ci) => (
-            <div key={ci} style={{ background: "#1B2A6B", borderRadius: 8, padding: "10px 4px", textAlign: "center", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "3px solid #FFD700", boxShadow: "3px 3px 0px rgba(0,0,0,0.4)", overflow: "hidden" }}>
-              <div style={{ fontWeight: 900, fontSize: 12, color: "#fff", textTransform: "uppercase", textShadow: "1px 1px 0 rgba(0,0,0,0.5)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{col.name}</div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginTop: 2, fontFamily: "'Arial', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{col.nickname}</div>
+            <div key={ci} style={{ background: "rgba(20,34,88,0.72)", borderRadius: 5, padding: "8px 3px", textAlign: "center", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #FFD700", boxShadow: "2px 2px 0 rgba(0,0,0,0.5)", overflow: "hidden", minHeight: 48, backdropFilter: "blur(3px)" }}>
+              <div style={{ fontWeight: 900, fontSize: 10, color: "#fff", textTransform: "uppercase", textShadow: "1px 1px 0 rgba(0,0,0,0.7)", lineHeight: 1.2, wordBreak: "break-word" }}>{col.name}</div>
             </div>
           ))}
         </div>
         {rows.map((row, ri) => (
           <div key={ri} style={{ display: "grid", gridTemplateColumns: gridCols, gap: 5, marginBottom: 5 }}>
-            <div style={{ background: "#1B2A6B", border: "3px solid #FFD700", borderRadius: 8, padding: "8px 6px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 88, boxShadow: "3px 3px 0px rgba(0,0,0,0.4)" }}>
-              <div style={{ fontWeight: 900, fontSize: 11, color: "#fff", textTransform: "uppercase", letterSpacing: 0.5 }}>{row.name}</div>
-              <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.5)", marginTop: 4, lineHeight: 1.4, fontFamily: "'Arial', sans-serif" }}>{row.desc}</div>
+            <div style={{ background: "rgba(20,34,88,0.72)", border: "2px solid #FFD700", borderRadius: 5, padding: "6px 5px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 76, boxShadow: "2px 2px 0 rgba(0,0,0,0.5)", backdropFilter: "blur(3px)" }}>
+              <div style={{ fontWeight: 900, fontSize: 9, color: "#fff", textTransform: "uppercase", letterSpacing: 0.5, lineHeight: 1.2 }}>{row.name}</div>
+              <div style={{ fontSize: 7, color: "rgba(255,255,255,0.55)", marginTop: 3, lineHeight: 1.3, fontFamily: "'Arial', sans-serif" }}>{row.desc}</div>
             </div>
             {columns.map((_, ci) => {
               const k = `${ri}-${ci}`
@@ -47,16 +46,16 @@ export default function Grid({
               const isLocked  = isCorrect || isWrong
               const isEmpty   = (answerPool[k] || []).length === 0
               const isAct     = active === k
-              let bg = "#1B2A6B"
-              let bd = isEmpty ? "#243050" : "#4a6aaf"
+              let bg = isEmpty ? "rgba(15,25,60,0.7)" : "rgba(20,34,88,0.65)"
+              let bd = isEmpty ? "#243050" : "#3a5a9a"
               if (isCorrect) { bg = "#145a2e"; bd = "#22c55e" }
               if (isWrong)   { bg = "#5a0a0a"; bd = "#dc2626" }
               if (isAct)     { bg = "#2a3d7a"; bd = "#FFD700" }
               return (
                 <div key={ci} onClick={() => !isLocked && onTileClick(ri, ci)}
-                  style={{ background: bg, border: `3px solid ${bd}`, borderRadius: 8, minHeight: 88, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: isLocked ? "default" : "pointer", transition: "all 0.12s", padding: 6, textAlign: "center", boxShadow: "3px 3px 0px rgba(0,0,0,0.35)" }}
-                  onMouseEnter={e => { if (!isLocked && !isEmpty) { e.currentTarget.style.borderColor = "#FFD700"; e.currentTarget.style.background = "#2a3d7a" } }}
-                  onMouseLeave={e => { if (!isLocked && !isAct) { e.currentTarget.style.borderColor = isEmpty ? "#243050" : "#4a6aaf"; e.currentTarget.style.background = "#1B2A6B" } }}
+                  style={{ background: bg, border: `2px solid ${bd}`, borderRadius: 5, minHeight: 76, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: isLocked ? "default" : "pointer", transition: "all 0.12s", padding: 6, textAlign: "center", boxShadow: "2px 2px 0 rgba(0,0,0,0.4)", backdropFilter: "blur(2px)" }}
+                  onMouseEnter={e => { if (!isLocked && !isEmpty) { e.currentTarget.style.borderColor = "#FFD700"; e.currentTarget.style.background = "rgba(42,61,122,0.85)" } }}
+                  onMouseLeave={e => { if (!isLocked && !isAct) { e.currentTarget.style.borderColor = isEmpty ? "#243050" : "#3a5a9a"; e.currentTarget.style.background = isEmpty ? "rgba(15,25,60,0.7)" : "rgba(20,34,88,0.65)" } }}
                 >
                   {isCorrect && <><div style={{ fontSize: 16, marginBottom: 3 }}>✅</div><div style={{ fontSize: 10, fontWeight: 700, color: "#4ade80", lineHeight: 1.3, fontFamily: "'Arial', sans-serif" }}>{cell.name}</div></>}
                   {isWrong   && <><div style={{ fontSize: 18, marginBottom: 3 }}>❌</div><div style={{ fontSize: 9, color: "#f87171", fontWeight: 700, textTransform: "uppercase" }}>Locked Out</div></>}
@@ -122,7 +121,7 @@ export default function Grid({
             )}
             <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
               <button onClick={onCancel} style={{ flex: 1, padding: "13px 0", borderRadius: 8, background: "#0d1833", border: "2px solid #4a6aaf", color: "#aaa", fontWeight: 700, cursor: "pointer", fontSize: 13, fontFamily: "'Arial', sans-serif" }}>Cancel</button>
-              <button onClick={onSubmit} style={{ flex: 2, padding: "13px 0", borderRadius: 8, background: "#CC1122", border: "2px solid #FFD700", color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, textTransform: "uppercase", letterSpacing: 1, boxShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>SUBMIT 🏀</button>
+              <button onClick={onSubmit} style={{ flex: 2, padding: "13px 0", borderRadius: 8, background: "#CC1122", border: "2px solid #FFD700", color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, textTransform: "uppercase", letterSpacing: 1, boxShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>SUBMIT ⚾</button>
             </div>
             <div style={{ textAlign: "center", marginTop: 10, fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "'Arial', sans-serif" }}>↑↓ arrows or scroll to browse • Enter to select • Escape to cancel</div>
           </div>
