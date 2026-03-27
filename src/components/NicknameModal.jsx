@@ -50,7 +50,7 @@ export default function NicknameModal({ modalInput, setModalInput, modalError, o
       <div style={{ height: 8, background: 'linear-gradient(to bottom, rgba(10,15,35,0.35), transparent)' }} />
 
       {/* ── WELCOME CARD ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 14px 40px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '10px 14px 40px' }}>
         <div style={{ width: '100%', maxWidth: 420, position: 'relative', overflow: 'hidden', background: 'rgba(8,12,28,0.84)', border: '2px solid #FFD700', borderRadius: 5, padding: '20px 20px 22px', boxShadow: '2px 2px 0 rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
           {/* Card scanlines */}
           <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px)', pointerEvents: 'none' }} />
@@ -63,7 +63,7 @@ export default function NicknameModal({ modalInput, setModalInput, modalError, o
                 Welcome to the Ball Park
               </div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.78)', fontFamily: "'Arial', sans-serif", lineHeight: 1.75 }}>
-                A daily baseball trivia grid. Click a tile, name a player who satisfies both their <span style={{ color: '#60a5fa', fontWeight: 700 }}>division</span> and the <span style={{ color: '#FFD700', fontWeight: 700 }}>row category</span>. One guess per tile — wrong answer locks it permanently.
+                A <span style={{ color: '#FFD700', fontWeight: 700 }}>daily auto-generated</span> sports trivia challenge. Each week brings a fresh theme built around the biggest stories and focal points in sports — trades, rivalries, records, and current events. Every day within that week adds a new puzzle under the same theme. Name a player who satisfies both their <span style={{ color: '#60a5fa', fontWeight: 700 }}>column</span> and <span style={{ color: '#FFD700', fontWeight: 700 }}>row</span> to fill all 16 tiles.
               </div>
             </div>
 
