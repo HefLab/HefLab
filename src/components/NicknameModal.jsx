@@ -6,7 +6,7 @@ export default function NicknameModal({ modalInput, setModalInput, modalError, o
       backgroundColor: '#0a0f1a',
       backgroundImage: "url('stadium.png')",
       backgroundSize: 'cover',
-      backgroundPosition: 'top center',
+      backgroundPosition: 'center 35%',
       backgroundRepeat: 'no-repeat',
       display: 'flex',
       flexDirection: 'column',
@@ -16,7 +16,7 @@ export default function NicknameModal({ modalInput, setModalInput, modalError, o
       {/* ── HEADER — identical to game header ── */}
       <div style={{
         position: 'relative', overflow: 'hidden',
-        background: 'linear-gradient(to bottom, rgba(8,12,28,0.82), rgba(20,34,88,0.78))',
+        background: 'linear-gradient(to bottom, rgba(8,12,28,0.72), rgba(20,34,88,0.68))',
         borderBottom: '5px solid #FFD700',
         boxShadow: '0 0 0 1px rgba(255,215,0,0.3), 0 6px 28px rgba(0,0,0,0.7)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',

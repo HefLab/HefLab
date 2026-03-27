@@ -29,7 +29,7 @@ const bgStyle = {
   backgroundColor: "#0a0f1a",
   backgroundImage: "url('stadium.png')",
   backgroundSize: "cover",
-  backgroundPosition: "top center",
+  backgroundPosition: "center 35%",
   backgroundRepeat: "no-repeat",
   backgroundAttachment: "scroll",
   fontFamily: "'Arial Black', 'Impact', 'Segoe UI Black', system-ui, sans-serif",
