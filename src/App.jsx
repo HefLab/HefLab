@@ -26,12 +26,9 @@ const ALL_PLAYERS = [...new Set([...PLAYER_DB, ...poolNames])]
 
 const bgStyle = {
   minHeight: "100vh",
-  backgroundColor: "#0a0f1a",
-  backgroundImage: "url('stadium.png')",
-  backgroundSize: "cover",
-  backgroundPosition: "center 35%",
-  backgroundRepeat: "no-repeat",
-  backgroundAttachment: "scroll",
+  background: "#7a0a00",
+  backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px)`,
+  backgroundSize: "18px 18px",
   fontFamily: "'Arial Black', 'Impact', 'Segoe UI Black', system-ui, sans-serif",
   color: "#fff",
   paddingBottom: 40,
@@ -206,7 +203,9 @@ export default function App() {
       <Header
         weekBadge={weekBadge} gridLabel={gridLabel} rows={rows}
         correct={correct} incorrect={incorrect} totalPlayed={totalPlayed} totalTiles={TOTAL_TILES}
-        showRules={showRules}
+        showRules={showRules} onToggleRules={() => setShowRules(p => !p)}
+        onEndGame={() => { submitScore(token, nickname, correct, today).then(() => setRefreshKey(k => k + 1)); setShowEndGame(true) }}
+        onReset={reset}
         nickname={nickname}
         showPopover={showPopover} popoverInput={popoverInput} setPopoverInput={setPopoverInput}
         popoverError={popoverError}
@@ -214,13 +213,7 @@ export default function App() {
         onPopoverSave={handlePopoverSave}
         onShowLeaderboard={() => setShowLeaderboard(true)}
       />
-      {/* Top divider: red subline + fade gap */}
-      <div style={{ background: "#CC1122", height: 3 }} />
-      <div style={{ height: 8, background: "linear-gradient(to bottom, rgba(10,15,35,0.35), transparent)" }} />
-      {/* Opening Day eligibility notice */}
-      <div style={{ textAlign: "center", padding: "2px 14px 6px", fontSize: 9, color: "rgba(255,215,0,0.88)", letterSpacing: 0, fontFamily: "'Arial', sans-serif", fontStyle: "italic", fontWeight: 700, lineHeight: 1.6, overflow: "hidden" }}>
-        *** To qualify as a correct answer, the player MUST be<br />in the starting lineup for their team on Opening Day ***
-      </div>
+      <div style={{ height: 22, background: "linear-gradient(to bottom, #1B2A6B, #7a0a00)", width: "100%" }} />
       <Grid
         columns={columns} rows={rows} answerPool={answerPool}
         cells={cells} active={active} inputVal={inputVal} feedback={feedback}
@@ -232,24 +225,6 @@ export default function App() {
         onCancel={() => { setActive(null); setFeedback(null) }}
         revealMap={revealMap} cornerPhrase={cornerPhrase}
       />
-      {/* Bottom divider + action buttons */}
-      <div style={{ height: 8, background: "linear-gradient(to top, rgba(10,15,35,0.35), transparent)" }} />
-      <div style={{ background: "#CC1122", height: 3 }} />
-      <div style={{ background: "#FFD700", height: 5 }} />
-      <div style={{ height: 8, background: "linear-gradient(to bottom, rgba(10,15,35,0.35), transparent)" }} />
-      <div style={{ display: "flex", justifyContent: "center", gap: 12, padding: "6px 14px 20px" }}>
-        <button onClick={() => setShowRules(p => !p)} style={{ background: "#0d1a3a", border: "2px solid #FFD700", borderRadius: 3, color: "#FFD700", fontSize: 10, fontWeight: 900, padding: "7px 16px", cursor: "pointer", fontFamily: "'Arial Black', sans-serif", boxShadow: "2px 2px 0 rgba(0,0,0,0.5)", textTransform: "uppercase", letterSpacing: 1 }}>
-          📋 {showRules ? "Hide Rules" : "How to Play"}
-        </button>
-        {totalPlayed > 0 && totalPlayed < TOTAL_TILES && (
-          <button onClick={() => { submitScore(token, nickname, correct, today).then(() => setRefreshKey(k => k + 1)); setShowEndGame(true) }} style={{ background: "#3a0808", border: "2px solid #f87171", borderRadius: 3, color: "#fca5a5", fontSize: 10, fontWeight: 900, padding: "7px 16px", cursor: "pointer", fontFamily: "'Arial Black', sans-serif", boxShadow: "2px 2px 0 rgba(0,0,0,0.5)", textTransform: "uppercase", letterSpacing: 1 }}>
-            End Game
-          </button>
-        )}
-        <button onClick={reset} style={{ background: "#3a0808", border: "2px solid #f87171", borderRadius: 3, color: "#fca5a5", fontSize: 10, fontWeight: 900, padding: "7px 16px", cursor: "pointer", fontFamily: "'Arial Black', sans-serif", boxShadow: "2px 2px 0 rgba(0,0,0,0.5)", textTransform: "uppercase", letterSpacing: 1 }}>
-          🔄 Reset
-        </button>
-      </div>
       {showLeaderboard && (
         <LeaderboardPanel
           entries={entries}

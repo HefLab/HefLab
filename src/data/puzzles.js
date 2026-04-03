@@ -2,8 +2,8 @@
 // To add a new day: add a new "YYYY-MM-DD" entry and push to GitHub.
 // weekBadge: plain text, ~30 chars max. gridLabel: plain text, ~35 chars max.
 // ACTIVE_OVERRIDE: set to a "YYYY-MM-DD" string to force that puzzle live for everyone. Set to null to resume normal date-based loading.
-export const ACTIVE_OVERRIDE = "2026-03-27";
-export const SITE_NOTICE = "NEW: Leaderboard is now live!\n\nYour first submission is final. Here's what counts:\n\n• Complete all 16 tiles or press \"End Game\" to submit your score.\n• Replaying or resetting after submitting will NOT change your rank.\n• Pressing \"End Game\" early locks your score at that point.\n• One score per player, per puzzle — only the first counts.\n\nGood luck — you only get one shot!";
+export const ACTIVE_OVERRIDE = "2026-03-26";
+export const SITE_NOTICE = "";
 export const PUZZLES = {
   "2026-03-22": {
     weekBadge: "WEEK 1: THIS IS MARCH",

@@ -121,7 +121,7 @@ export default function Grid({
             )}
             <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
               <button onClick={onCancel} style={{ flex: 1, padding: "13px 0", borderRadius: 8, background: "#0d1833", border: "2px solid #4a6aaf", color: "#aaa", fontWeight: 700, cursor: "pointer", fontSize: 13, fontFamily: "'Arial', sans-serif" }}>Cancel</button>
-              <button onClick={onSubmit} style={{ flex: 2, padding: "13px 0", borderRadius: 8, background: "#CC1122", border: "2px solid #FFD700", color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, textTransform: "uppercase", letterSpacing: 1, boxShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>SUBMIT ⚾</button>
+              <button onClick={onSubmit} style={{ flex: 2, padding: "13px 0", borderRadius: 8, background: "#CC1122", border: "2px solid #FFD700", color: "#fff", fontWeight: 900, cursor: "pointer", fontSize: 15, textTransform: "uppercase", letterSpacing: 1, boxShadow: "3px 3px 0 rgba(0,0,0,0.3)" }}>SUBMIT 🏀</button>
             </div>
             <div style={{ textAlign: "center", marginTop: 10, fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "'Arial', sans-serif" }}>↑↓ arrows or scroll to browse • Enter to select • Escape to cancel</div>
           </div>
